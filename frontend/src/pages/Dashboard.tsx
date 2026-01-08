@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
   Activity, TrendingUp, Heart, Calendar, 
-  ArrowRight, BarChart3, Settings, Bell
+  ArrowRight, BarChart3, Settings, Bell, FileText
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -15,6 +15,19 @@ const recentActivity = [
   { date: "Jan 5, 2024", action: "Completed Risk Assessment", score: 42 },
   { date: "Dec 20, 2023", action: "Updated Health Metrics", score: 45 },
   { date: "Dec 1, 2023", action: "Initial Assessment", score: 52 },
+];
+
+const healthHistory = [
+  { date: "Jan 5, 2024", riskScore: 42, bmi: 26.5, bloodPressure: "Normal", status: "Moderate" },
+  { date: "Dec 20, 2023", riskScore: 45, bmi: 27.1, bloodPressure: "Normal", status: "Moderate" },
+  { date: "Dec 1, 2023", riskScore: 52, bmi: 28.2, bloodPressure: "Elevated", status: "Moderate" },
+  { date: "Sep 15, 2023", riskScore: 48, bmi: 27.8, bloodPressure: "Elevated", status: "Moderate" },
+  { date: "Jun 10, 2023", riskScore: 55, bmi: 29.0, bloodPressure: "High", status: "Moderate" },
+  { date: "Mar 5, 2023", riskScore: 58, bmi: 29.5, bloodPressure: "High", status: "Moderate" },
+  { date: "Dec 12, 2022", riskScore: 62, bmi: 30.1, bloodPressure: "High", status: "High" },
+  { date: "Sep 8, 2022", riskScore: 65, bmi: 30.8, bloodPressure: "High", status: "High" },
+  { date: "Jun 3, 2022", riskScore: 68, bmi: 31.2, bloodPressure: "High", status: "High" },
+  { date: "Mar 1, 2022", riskScore: 70, bmi: 31.5, bloodPressure: "High", status: "High" },
 ];
 
 const healthTips = [
@@ -241,6 +254,90 @@ const Dashboard = () => {
               </Card>
             </motion.div>
           </div>
+
+          {/* Health History Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-8"
+          >
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Health Records (10 Year History)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Date</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Risk Score</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">BMI</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Blood Pressure</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {healthHistory.map((record, index) => (
+                        <tr key={index} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
+                          <td className="py-4 px-4 text-sm font-medium">{record.date}</td>
+                          <td className="py-4 px-4">
+                            <span className={cn(
+                              "text-sm font-bold px-3 py-1 rounded-full",
+                              record.riskScore < 40 
+                                ? "bg-risk-low/10 text-risk-low" 
+                                : record.riskScore < 60 
+                                  ? "bg-risk-moderate/10 text-risk-moderate" 
+                                  : "bg-risk-high/10 text-risk-high"
+                            )}>
+                              {record.riskScore}%
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-sm">{record.bmi}</td>
+                          <td className="py-4 px-4">
+                            <span className={cn(
+                              "text-xs px-2 py-1 rounded-full font-medium",
+                              record.bloodPressure === "Normal" 
+                                ? "bg-green-100 text-green-700" 
+                                : record.bloodPressure === "Elevated"
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : "bg-red-100 text-red-700"
+                            )}>
+                              {record.bloodPressure}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={cn(
+                              "text-xs px-2 py-1 rounded-full font-medium",
+                              record.status === "Low" 
+                                ? "bg-risk-low/10 text-risk-low" 
+                                : record.status === "Moderate"
+                                  ? "bg-risk-moderate/10 text-risk-moderate"
+                                  : "bg-risk-high/10 text-risk-high"
+                            )}>
+                              {record.status} Risk
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {healthHistory.length} records from the past 10 years
+                  </p>
+                  <Button variant="outline" size="sm">
+                    Download Full Report
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </main>
 

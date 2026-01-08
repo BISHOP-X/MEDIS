@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 interface FormData {
@@ -169,23 +168,28 @@ const Assessment = () => {
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-3">
-                      <Label>Age</Label>
-                      <div className="flex items-center gap-4">
-                        <Slider
-                          value={[formData.age]}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, age: value[0] })
+                      <Label htmlFor="age">Age</Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        value={formData.age || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            setFormData({ ...formData, age: 0 });
+                          } else {
+                            const numValue = parseInt(value);
+                            if (!isNaN(numValue)) {
+                              setFormData({ ...formData, age: numValue });
+                            }
                           }
-                          min={18}
-                          max={100}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <span className="text-2xl font-bold text-primary w-16 text-right">
-                          {formData.age}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">years old</p>
+                        }}
+                        min={18}
+                        max={100}
+                        placeholder="Enter your age"
+                        className="text-lg h-12 px-4 border-2"
+                      />
+                      <p className="text-sm text-muted-foreground">Must be between 18 and 100 years old</p>
                     </div>
 
                     <div className="space-y-3">
