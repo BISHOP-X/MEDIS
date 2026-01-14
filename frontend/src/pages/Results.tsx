@@ -1,9 +1,10 @@
 import { useLocation, Link, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle, 
   Heart, Dumbbell, Apple, Coffee, ArrowRight, Download,
-  BarChart3, Activity
+  BarChart3, Activity, Loader2, WifiOff, Brain
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -12,6 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import RiskMeter from "@/components/dashboard/RiskMeter";
 import ContributingFactors from "@/components/dashboard/ContributingFactors";
 import { cn } from "@/lib/utils";
+import { 
+  getPrediction, 
+  calculateBMI, 
+  type UserFormData, 
+  type PredictionResponse 
+} from "@/services/api";
 
 interface FormData {
   age: number;
@@ -24,7 +31,8 @@ interface FormData {
   physicalActivity: number;
 }
 
-const recommendations = [
+// Default recommendations (used as fallback)
+const defaultRecommendations = [
   {
     icon: Dumbbell,
     title: "Increase Physical Activity",
@@ -53,15 +61,51 @@ const recommendations = [
 
 const Results = () => {
   const location = useLocation();
-  const { formData, bmi } = (location.state as { formData: FormData; bmi: string }) || {};
+  const { formData, bmi: passedBmi } = (location.state as { formData: FormData; bmi: string }) || {};
+
+  // State for API response
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
+
+  // Calculate BMI
+  const bmi = passedBmi || (formData ? calculateBMI(formData.height, formData.weight).toString() : "0");
 
   // Redirect if no data
   if (!formData) {
     return <Navigate to="/assessment" replace />;
   }
 
-  // Calculate risk score based on form data (simplified algorithm)
-  const calculateRiskScore = (): number => {
+  // Call ML API on mount
+  useEffect(() => {
+    const fetchPrediction = async () => {
+      try {
+        setLoading(true);
+        setApiError(null);
+        
+        // Call the real ML API
+        const result = await getPrediction(formData as UserFormData, 'random_forest');
+        setPrediction(result);
+        setUsingFallback(false);
+        
+      } catch (error) {
+        console.error('API Error:', error);
+        setApiError(error instanceof Error ? error.message : 'Failed to connect to ML server');
+        setUsingFallback(true);
+        
+        // Use fallback calculation if API fails
+        setPrediction(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrediction();
+  }, [formData]);
+
+  // Fallback risk calculation (used when API is unavailable)
+  const calculateFallbackRiskScore = (): number => {
     let score = 0;
     
     // Age factor
@@ -92,9 +136,42 @@ const Results = () => {
     return Math.min(100, Math.max(0, score));
   };
 
-  const riskScore = calculateRiskScore();
+  // Use API result or fallback
+  // Handle nested API response structure
+  const getRiskPercentage = (): number => {
+    if (prediction) {
+      // New nested structure
+      if (prediction.prediction?.probability_percentage !== undefined) {
+        return prediction.prediction.probability_percentage;
+      }
+      // Legacy flat structure
+      if (prediction.risk_percentage !== undefined) {
+        return prediction.risk_percentage;
+      }
+    }
+    return calculateFallbackRiskScore();
+  };
+  
+  const riskScore = getRiskPercentage();
   
   const getRiskLevel = () => {
+    if (prediction) {
+      // New nested structure
+      if (prediction.risk?.label) {
+        const label = prediction.risk.label;
+        if (label.includes("Low")) return { label: "Low Risk", color: "text-risk-low", bg: "bg-risk-low" };
+        if (label.includes("Moderate")) return { label: "Moderate Risk", color: "text-risk-moderate", bg: "bg-risk-moderate" };
+        return { label: "High Risk", color: "text-risk-high", bg: "bg-risk-high" };
+      }
+      // Legacy flat structure
+      if (prediction.risk_level) {
+        const level = prediction.risk_level;
+        if (level === "Low") return { label: "Low Risk", color: "text-risk-low", bg: "bg-risk-low" };
+        if (level === "Moderate") return { label: "Moderate Risk", color: "text-risk-moderate", bg: "bg-risk-moderate" };
+        return { label: "High Risk", color: "text-risk-high", bg: "bg-risk-high" };
+      }
+    }
+    // Fallback
     if (riskScore < 30) return { label: "Low Risk", color: "text-risk-low", bg: "bg-risk-low" };
     if (riskScore < 60) return { label: "Moderate Risk", color: "text-risk-moderate", bg: "bg-risk-moderate" };
     return { label: "High Risk", color: "text-risk-high", bg: "bg-risk-high" };
@@ -102,15 +179,114 @@ const Results = () => {
 
   const riskLevel = getRiskLevel();
 
-  // Contributing factors for the chart
-  const factors = [
-    { name: "BMI", value: parseFloat(bmi) >= 25 ? 80 : 30, max: 100 },
-    { name: "Age", value: formData.age > 45 ? 70 : formData.age > 35 ? 50 : 30, max: 100 },
-    { name: "Blood Pressure", value: formData.bloodPressure === "High" ? 90 : formData.bloodPressure === "Elevated" ? 60 : 20, max: 100 },
-    { name: "Family History", value: formData.familyHistory === "Parent or Sibling" ? 85 : formData.familyHistory === "Grandparent" ? 50 : 10, max: 100 },
-    { name: "Diet", value: (10 - formData.dietQuality) * 10, max: 100 },
-    { name: "Activity", value: (10 - formData.physicalActivity) * 10, max: 100 },
-  ];
+  // Contributing factors - from API's SHAP values or fallback
+  const getFactors = () => {
+    // Check new nested structure first
+    if (prediction?.explainability?.top_factors && prediction.explainability.top_factors.length > 0) {
+      return prediction.explainability.top_factors.slice(0, 6).map((factor) => ({
+        name: factor.feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value: Math.round(Math.abs(factor.contribution) * 100),
+        max: 100,
+        positive: factor.direction === 'increases_risk',
+      }));
+    }
+    
+    // Check legacy flat structure
+    if (prediction?.feature_contributions) {
+      // Convert SHAP values to display format
+      const contributions = prediction.feature_contributions;
+      const entries = Object.entries(contributions);
+      
+      // Sort by absolute value (most impactful first)
+      entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+      
+      // Convert to percentage (SHAP values are typically -1 to 1)
+      return entries.slice(0, 6).map(([name, value]) => ({
+        name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value: Math.round(Math.abs(value) * 100),
+        max: 100,
+        positive: value > 0, // Positive = increases risk
+      }));
+    }
+    
+    // Fallback factors
+    return [
+      { name: "BMI", value: parseFloat(bmi) >= 25 ? 80 : 30, max: 100 },
+      { name: "Age", value: formData.age > 45 ? 70 : formData.age > 35 ? 50 : 30, max: 100 },
+      { name: "Blood Pressure", value: formData.bloodPressure === "High" ? 90 : formData.bloodPressure === "Elevated" ? 60 : 20, max: 100 },
+      { name: "Family History", value: formData.familyHistory === "Parent or Sibling" ? 85 : formData.familyHistory === "Grandparent" ? 50 : 10, max: 100 },
+      { name: "Diet", value: (10 - formData.dietQuality) * 10, max: 100 },
+      { name: "Activity", value: (10 - formData.physicalActivity) * 10, max: 100 },
+    ];
+  };
+
+  const factors = getFactors();
+
+  // Get recommendations from API or use defaults
+  const getRecommendations = () => {
+    if (prediction && prediction.recommendations && prediction.recommendations.length > 0) {
+      // Map API recommendations to display format
+      // API can return either strings or objects with title/description
+      return prediction.recommendations.slice(0, 4).map((rec: unknown, index: number) => {
+        // Handle both string and object formats
+        if (typeof rec === 'string') {
+          return {
+            icon: [Dumbbell, Apple, Coffee, Heart][index % 4],
+            title: rec.split('.')[0] || rec.substring(0, 30),
+            description: rec,
+            priority: index < 2 ? "high" : "medium",
+          };
+        } else if (typeof rec === 'object' && rec !== null) {
+          // API returns objects with title, description, priority, icon
+          const recObj = rec as { title?: string; description?: string; priority?: string };
+          return {
+            icon: [Dumbbell, Apple, Coffee, Heart][index % 4],
+            title: recObj.title || `Recommendation ${index + 1}`,
+            description: recObj.description || '',
+            priority: recObj.priority || (index < 2 ? "high" : "medium"),
+          };
+        }
+        // Fallback
+        return {
+          icon: [Dumbbell, Apple, Coffee, Heart][index % 4],
+          title: `Recommendation ${index + 1}`,
+          description: String(rec),
+          priority: index < 2 ? "high" : "medium",
+        };
+      });
+    }
+    return defaultRecommendations;
+  };
+
+  const recommendations = getRecommendations();
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-24 pb-16">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-20"
+            >
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center">
+                  <Brain className="w-10 h-10 text-white animate-pulse" />
+                </div>
+                <Loader2 className="w-24 h-24 absolute -top-2 -left-2 animate-spin text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold mt-8">Analyzing Your Data</h2>
+              <p className="text-muted-foreground mt-2">Our AI is processing your health information...</p>
+            </motion.div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,6 +294,45 @@ const Results = () => {
       
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-6xl">
+          {/* API Status Banner */}
+          {usingFallback && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 flex items-center gap-3"
+            >
+              <WifiOff className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              <div>
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  ML Server Offline - Using Fallback Calculation
+                </p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                  Start the backend server for AI-powered predictions: <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">uvicorn api:app --port 8000</code>
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ML Model Badge */}
+          {prediction && !usingFallback && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center gap-3"
+            >
+              <Brain className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <div>
+                <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  ✅ AI Prediction Complete
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  Model: <span className="font-semibold">{(prediction.input_summary?.model_used || prediction.model_used || 'random_forest').replace(/_/g, ' ').toUpperCase()}</span> | 
+                  Powered by SHAP Explainability
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -141,7 +356,7 @@ const Results = () => {
               transition={{ delay: 0.1 }}
               className="lg:col-span-1"
             >
-              <Card className="h-full border-0 shadow-lg overflow-hidden">
+              <Card className="h-full border-0 shadow-lg overflow-hidden dark:border dark:border-border/30">
                 <CardHeader className="gradient-primary text-primary-foreground text-center py-6">
                   <CardTitle className="flex items-center justify-center gap-2">
                     <Activity className="w-5 h-5" />
@@ -173,7 +388,7 @@ const Results = () => {
               transition={{ delay: 0.2 }}
               className="lg:col-span-2"
             >
-              <Card className="h-full border-0 shadow-lg">
+              <Card className="h-full border-0 shadow-lg dark:border dark:border-border/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-primary" />
@@ -210,15 +425,15 @@ const Results = () => {
                   transition={{ delay: 0.4 + index * 0.1 }}
                 >
                   <Card className={cn(
-                    "h-full border-0 shadow-md transition-all hover:shadow-lg",
+                    "h-full border-0 shadow-md transition-all hover:shadow-lg dark:bg-card/50 dark:border dark:border-border/30",
                     rec.priority === "high" && "border-l-4 border-l-accent"
                   )}>
                     <CardContent className="p-6">
                       <div className={cn(
                         "w-12 h-12 rounded-xl flex items-center justify-center mb-4",
                         rec.priority === "high" 
-                          ? "bg-accent/10 text-accent" 
-                          : "bg-primary/10 text-primary"
+                          ? "bg-accent/10 text-accent dark:bg-accent/20" 
+                          : "bg-primary/10 text-primary dark:bg-primary/20"
                       )}>
                         <rec.icon className="w-6 h-6" />
                       </div>
@@ -227,7 +442,7 @@ const Results = () => {
                         {rec.description}
                       </p>
                       {rec.priority === "high" && (
-                        <span className="inline-block mt-3 text-xs font-semibold text-accent bg-accent/10 px-2 py-1 rounded-full">
+                        <span className="inline-block mt-3 text-xs font-semibold text-accent bg-accent/10 dark:bg-accent/20 px-2 py-1 rounded-full">
                           High Priority
                         </span>
                       )}

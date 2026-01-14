@@ -42,7 +42,7 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-24 section-muted">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <motion.div
@@ -73,9 +73,9 @@ const FeaturesSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="group relative bg-card rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20"
+              className="group relative bg-card rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20 dark:bg-card/50 dark:hover:bg-card dark:border-border/30 dark:hover:border-primary/30"
             >
-              <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+              <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform dark:bg-opacity-20`}>
                 <feature.icon className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
@@ -84,7 +84,7 @@ const FeaturesSection = () => {
               </p>
               
               {/* Hover gradient */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none dark:from-primary/10" />
             </motion.div>
           ))}
         </div>

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Activity, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -54,9 +55,9 @@ const Header = () => {
             </div>
             <span className={cn(
               "text-xl font-bold font-display transition-colors",
-              useLightText ? "text-background" : "text-foreground"
+              useLightText ? "text-white" : "text-foreground"
             )}>
-              MED<span className="text-gradient-primary">IS</span>
+              MED<span className={cn(useLightText ? "text-cyan-400" : "text-gradient-primary")}>IS</span>
             </span>
           </Link>
 
@@ -67,10 +68,10 @@ const Header = () => {
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "relative text-sm font-medium transition-colors hover:text-primary",
+                  "relative text-sm font-medium transition-colors",
                   location.pathname === link.href
-                    ? "text-primary"
-                    : useLightText ? "text-background/80 hover:text-background" : "text-muted-foreground"
+                    ? useLightText ? "text-cyan-400" : "text-primary"
+                    : useLightText ? "text-white/90 hover:text-white" : "text-muted-foreground hover:text-primary"
                 )}
               >
                 {link.label}
@@ -86,11 +87,17 @@ const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Theme Toggle */}
+            <ThemeToggle 
+              variant="icon" 
+              useLightColors={useLightText}
+            />
+
             {isAuthenticated ? (
               <>
                 <div className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg",
-                  useLightText ? "text-background" : "text-foreground"
+                  useLightText ? "text-white" : "text-foreground"
                 )}>
                   <User className="w-4 h-4" />
                   <span className="text-sm font-medium">{user?.name}</span>
@@ -160,6 +167,12 @@ const Header = () => {
                   </Link>
                 ))}
                 <div className="pt-4 space-y-3">
+                  {/* Mobile Theme Toggle */}
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50">
+                    <span className="text-sm font-medium text-foreground">Theme</span>
+                    <ThemeToggle variant="pill" />
+                  </div>
+
                   {isAuthenticated ? (
                     <>
                       <div className="flex items-center gap-2 px-3 py-2 text-foreground">

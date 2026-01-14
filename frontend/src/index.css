@@ -5,10 +5,11 @@
 @tailwind utilities;
 
 /* MEDIS Design System - Medical AI Application */
+/* Professional Light/Dark Mode Implementation */
 
 @layer base {
   :root {
-    /* Core Colors - Trust & Health */
+    /* Core Colors - Light Mode (Trust & Health) */
     --background: 210 40% 98%;
     --foreground: 215 25% 15%;
 
@@ -43,28 +44,33 @@
 
     --radius: 0.75rem;
 
-    /* Custom MEDIS Tokens */
+    /* Custom MEDIS Tokens - Light Mode */
     --gradient-primary: linear-gradient(135deg, hsl(210 85% 45%) 0%, hsl(195 80% 40%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(210 40% 98%) 0%, hsl(210 50% 95%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(12 85% 58%) 0%, hsl(25 90% 55%) 100%);
     --gradient-health: linear-gradient(135deg, hsl(168 65% 45%) 0%, hsl(175 70% 40%) 100%);
     --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 30% 98%) 100%);
     
     /* Risk Score Colors */
     --risk-low: 142 70% 45%;
     --risk-moderate: 45 90% 50%;
     --risk-high: 0 75% 55%;
     
-    /* Shadows */
+    /* Enhanced Shadows - Light Mode */
     --shadow-sm: 0 2px 8px -2px hsl(210 50% 20% / 0.08);
     --shadow-md: 0 8px 24px -4px hsl(210 50% 20% / 0.12);
     --shadow-lg: 0 20px 40px -8px hsl(210 50% 20% / 0.16);
     --shadow-glow: 0 0 40px -10px hsl(210 85% 45% / 0.3);
+    --shadow-glow-accent: 0 0 40px -10px hsl(12 85% 58% / 0.3);
+    --shadow-inner: inset 0 2px 4px 0 hsl(210 50% 20% / 0.06);
     
-    /* Glass Effect */
-    --glass-bg: rgba(255, 255, 255, 0.8);
-    --glass-border: rgba(255, 255, 255, 0.5);
+    /* Glass Effect - Light Mode */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
     
+    /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -73,48 +79,99 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Chart Colors - Light Mode */
+    --chart-1: 210 85% 45%;
+    --chart-2: 168 65% 45%;
+    --chart-3: 12 85% 58%;
+    --chart-4: 262 83% 58%;
+    --chart-5: 45 90% 50%;
   }
 
   .dark {
-    --background: 215 30% 8%;
+    /* Core Colors - Dark Mode (Elegant & Modern) */
+    --background: 222 47% 6%;
     --foreground: 210 40% 96%;
 
-    --card: 215 30% 12%;
+    --card: 222 47% 9%;
     --card-foreground: 210 40% 96%;
 
-    --popover: 215 30% 12%;
+    --popover: 222 47% 9%;
     --popover-foreground: 210 40% 96%;
 
-    --primary: 210 80% 55%;
-    --primary-foreground: 215 30% 8%;
+    /* Primary - Luminous Blue */
+    --primary: 210 90% 58%;
+    --primary-foreground: 222 47% 6%;
 
-    --secondary: 168 60% 40%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary - Vibrant Teal */
+    --secondary: 168 70% 50%;
+    --secondary-foreground: 222 47% 6%;
 
-    --muted: 215 25% 18%;
-    --muted-foreground: 215 15% 60%;
+    /* Muted - Rich grays */
+    --muted: 222 30% 14%;
+    --muted-foreground: 215 20% 60%;
 
-    --accent: 12 80% 55%;
+    /* Accent - Glowing Coral */
+    --accent: 12 85% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 50%;
+    --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 20%;
-    --input: 215 25% 20%;
-    --ring: 210 80% 55%;
+    --border: 222 25% 16%;
+    --input: 222 25% 16%;
+    --ring: 210 90% 58%;
+
+    /* Custom MEDIS Tokens - Dark Mode */
+    --gradient-primary: linear-gradient(135deg, hsl(210 90% 50%) 0%, hsl(195 85% 45%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 47% 8%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(12 85% 58%) 0%, hsl(25 90% 55%) 100%);
+    --gradient-health: linear-gradient(135deg, hsl(168 70% 45%) 0%, hsl(175 75% 40%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(30, 35, 50, 0.9) 0%, rgba(30, 35, 50, 0.7) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(222 47% 10%) 0%, hsl(222 47% 8%) 100%);
     
-    --glass-bg: rgba(30, 40, 55, 0.8);
-    --glass-border: rgba(60, 80, 100, 0.3);
+    /* Enhanced Shadows - Dark Mode */
+    --shadow-sm: 0 2px 8px -2px hsl(222 50% 5% / 0.5);
+    --shadow-md: 0 8px 24px -4px hsl(222 50% 5% / 0.6);
+    --shadow-lg: 0 20px 40px -8px hsl(222 50% 5% / 0.7);
+    --shadow-glow: 0 0 60px -10px hsl(210 90% 58% / 0.4);
+    --shadow-glow-accent: 0 0 60px -10px hsl(12 85% 58% / 0.4);
+    --shadow-inner: inset 0 2px 4px 0 hsl(222 50% 5% / 0.3);
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    /* Glass Effect - Dark Mode */
+    --glass-bg: rgba(20, 25, 40, 0.85);
+    --glass-border: rgba(60, 80, 120, 0.25);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    
+    /* Sidebar - Dark Mode */
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 40% 92%;
+    --sidebar-primary: 210 90% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 222 30% 14%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 222 25% 16%;
+    --sidebar-ring: 210 90% 58%;
+
+    /* Chart Colors - Dark Mode (More vibrant) */
+    --chart-1: 210 90% 58%;
+    --chart-2: 168 70% 50%;
+    --chart-3: 12 85% 60%;
+    --chart-4: 262 83% 65%;
+    --chart-5: 45 90% 55%;
+  }
+
+  /* Theme Transition - Smooth color changes */
+  .theme-transitioning,
+  .theme-transitioning *,
+  .theme-transitioning *::before,
+  .theme-transitioning *::after {
+    transition: background-color 0.3s ease, 
+                border-color 0.3s ease, 
+                color 0.3s ease,
+                fill 0.3s ease,
+                stroke 0.3s ease,
+                box-shadow 0.3s ease !important;
   }
 }
 
@@ -123,25 +180,51 @@
     @apply border-border;
   }
 
+  html {
+    @apply scroll-smooth;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--gradient-surface);
+    min-height: 100vh;
   }
   
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
     @apply font-bold tracking-tight;
   }
+
+  /* Selection Colors */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
 }
 
 @layer components {
+  /* Glass Card - Enhanced for both modes */
   .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Dark mode glass enhancements */
+  .dark .glass-card {
+    background: rgba(15, 20, 35, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
   
+  /* Gradient Classes */
   .gradient-primary {
     background: var(--gradient-primary);
   }
@@ -153,24 +236,190 @@
   .gradient-health {
     background: var(--gradient-health);
   }
+
+  .gradient-surface {
+    background: var(--gradient-surface);
+  }
   
+  /* Text Gradients */
   .text-gradient-primary {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  .dark .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(210 90% 65%) 0%, hsl(195 85% 60%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
   
+  /* Shadow Effects */
   .shadow-glow {
     box-shadow: var(--shadow-glow);
   }
+
+  .shadow-glow-accent {
+    box-shadow: var(--shadow-glow-accent);
+  }
+
+  /* Dark mode enhanced shadows */
+  .dark .shadow-glow {
+    box-shadow: 0 0 80px -15px hsl(210 90% 58% / 0.5);
+  }
   
+  /* Card Enhancements for Dark Mode */
+  .dark .card-elevated {
+    background: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(222 47% 9%) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Interactive Card Hover Effects */
+  .card-interactive {
+    @apply transition-all duration-300;
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .dark .card-interactive:hover {
+    box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  /* Floating Animation */
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
   
   .animate-pulse-slow {
     animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Dark Mode Glow Effects on Primary Elements */
+  .dark .glow-primary {
+    position: relative;
+  }
+
+  .dark .glow-primary::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, hsl(210 90% 58% / 0.3) 0%, hsl(195 85% 45% / 0.3) 100%);
+    border-radius: inherit;
+    filter: blur(12px);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .dark .glow-primary:hover::before {
+    opacity: 1;
+  }
+
+  /* Feature Icon Background - Dark Mode */
+  .dark .feature-icon-bg {
+    background: linear-gradient(135deg, rgba(var(--primary), 0.15) 0%, rgba(var(--primary), 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Section Backgrounds */
+  .section-muted {
+    @apply bg-muted/30;
+  }
+
+  .dark .section-muted {
+    background: linear-gradient(180deg, hsl(222 47% 7%) 0%, hsl(222 47% 6%) 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  /* Footer Dark Mode */
+  .footer-dark {
+    @apply bg-foreground text-background;
+  }
+
+  .dark .footer-dark {
+    background: linear-gradient(180deg, hsl(222 47% 5%) 0%, hsl(222 47% 3%) 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Input Focus States - Enhanced */
+  .input-enhanced {
+    @apply transition-all duration-200;
+  }
+
+  .input-enhanced:focus {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+  }
+
+  .dark .input-enhanced:focus {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Button Glow Effect - Dark Mode */
+  .dark .btn-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dark .btn-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+
+  .dark .btn-glow:hover::before {
+    transform: translateX(100%);
+  }
+
+  /* Stat Card - Dark Mode Enhancements */
+  .stat-card {
+    @apply rounded-xl border bg-card;
+  }
+
+  .dark .stat-card {
+    background: linear-gradient(135deg, hsl(222 47% 10%) 0%, hsl(222 47% 8%) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Risk Score Colors - Enhanced for visibility */
+  .risk-low {
+    @apply text-risk-low;
+  }
+
+  .risk-moderate {
+    @apply text-risk-moderate;
+  }
+
+  .risk-high {
+    @apply text-risk-high;
+  }
+
+  /* Dark mode risk badges */
+  .dark .risk-badge-low {
+    background: hsl(142 70% 45% / 0.15);
+    color: hsl(142 70% 55%);
+    border: 1px solid hsl(142 70% 45% / 0.3);
+  }
+
+  .dark .risk-badge-moderate {
+    background: hsl(45 90% 50% / 0.15);
+    color: hsl(45 90% 60%);
+    border: 1px solid hsl(45 90% 50% / 0.3);
+  }
+
+  .dark .risk-badge-high {
+    background: hsl(0 75% 55% / 0.15);
+    color: hsl(0 75% 65%);
+    border: 1px solid hsl(0 75% 55% / 0.3);
   }
 }
 
@@ -184,10 +433,48 @@
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
   }
+
+  @keyframes glow-pulse {
+    0%, 100% { 
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    }
+    50% { 
+      box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
+    }
+  }
   
   .animate-shimmer {
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
+  }
+
+  .dark .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  /* Backdrop blur utilities */
+  .backdrop-blur-glass {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /* Text shadow for readability on images */
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-md {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   }
 }

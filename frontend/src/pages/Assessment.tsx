@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   User, Heart, Activity, ChevronRight, ChevronLeft, 
-  Check, Calculator, ArrowRight
+  Check, Calculator, ArrowRight, AlertCircle
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 interface FormData {
@@ -56,7 +57,57 @@ const Assessment = () => {
     return { label: "Obese", color: "text-risk-high" };
   };
 
+  // Validation for each step
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const validateStep = (step: number): boolean => {
+    setValidationError(null);
+    
+    switch (step) {
+      case 1: // Demographics
+        if (!formData.age || formData.age < 18 || formData.age > 100) {
+          setValidationError("Please enter a valid age (18-100)");
+          return false;
+        }
+        if (!formData.gender) {
+          setValidationError("Please select your gender");
+          return false;
+        }
+        return true;
+        
+      case 2: // Vitals
+        if (!formData.height || formData.height < 100 || formData.height > 250) {
+          setValidationError("Please enter a valid height (100-250 cm)");
+          return false;
+        }
+        if (!formData.weight || formData.weight < 30 || formData.weight > 300) {
+          setValidationError("Please enter a valid weight (30-300 kg)");
+          return false;
+        }
+        if (!formData.bloodPressure) {
+          setValidationError("Please select your blood pressure history");
+          return false;
+        }
+        return true;
+        
+      case 3: // Lifestyle
+        if (!formData.familyHistory) {
+          setValidationError("Please select your family history");
+          return false;
+        }
+        return true;
+        
+      default:
+        return true;
+    }
+  };
+
   const handleNext = () => {
+    // Validate current step before proceeding
+    if (!validateStep(currentStep)) {
+      return;
+    }
+    
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -150,7 +201,7 @@ const Assessment = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-card rounded-3xl shadow-lg border border-border/50 p-8 md:p-12"
+            className="bg-card rounded-3xl shadow-lg border border-border/50 p-8 md:p-12 dark:bg-card/50 dark:border-border/30"
           >
             <AnimatePresence mode="wait">
               {/* Step 1: Demographics */}
@@ -412,28 +463,42 @@ const Assessment = () => {
             </AnimatePresence>
 
             {/* Navigation */}
-            <div className="flex justify-between mt-10 pt-6 border-t border-border">
-              <Button
-                variant="ghost"
-                onClick={handlePrev}
-                disabled={currentStep === 1}
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
-              </Button>
-              <Button variant="hero" onClick={handleNext}>
-                {currentStep === 3 ? (
-                  <>
-                    Get Results
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ChevronRight className="w-4 h-4" />
-                  </>
-                )}
-              </Button>
+            <div className="mt-10 pt-6 border-t border-border">
+              {/* Validation Error Display */}
+              {validationError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <p className="text-sm text-red-700 dark:text-red-300">{validationError}</p>
+                </motion.div>
+              )}
+              
+              <div className="flex justify-between">
+                <Button
+                  variant="ghost"
+                  onClick={handlePrev}
+                  disabled={currentStep === 1}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+                <Button variant="hero" onClick={handleNext}>
+                  {currentStep === 3 ? (
+                    <>
+                      Get Results
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  ) : (
+                    <>
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>

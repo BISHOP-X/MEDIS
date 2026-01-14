@@ -27,7 +27,7 @@ const steps = [
 
 const HowItWorksSection = () => {
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-24 section-muted">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <motion.div

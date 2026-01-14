@@ -7,3 +7,12 @@ __pycache__/
 *.pyc
 .vscode/
 .idea/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# ML model files (large binary files - keep locally)
+# Uncomment below if you want to exclude model files from git
+# ml/saved_models/*.joblib

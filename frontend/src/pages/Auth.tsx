@@ -9,14 +9,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import heroImage from "@/assets/hero-medical-ai.jpg";
 
+// Demo credentials for easy testing - any credentials work with mock auth
+const DEMO_CREDENTIALS = {
+  email: "patient@gmail.com",
+  password: "demo123",
+};
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
-    password: "",
+    email: DEMO_CREDENTIALS.email,
+    password: DEMO_CREDENTIALS.password,
   });
   const { toast } = useToast();
   const navigate = useNavigate();

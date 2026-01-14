@@ -70,10 +70,10 @@ const ProblemSection = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-muted/50 rounded-xl p-4 border border-border/50"
+                  className="bg-muted/50 rounded-xl p-4 border border-border/50 dark:bg-muted/30 dark:border-border/30"
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-accent/10 dark:bg-accent/20 flex items-center justify-center">
                       <stat.icon className="w-4 h-4 text-accent" />
                     </div>
                     <span className="text-2xl font-bold text-foreground">
@@ -109,7 +109,7 @@ const ProblemSection = () => {
             
             {/* Floating Card */}
             <motion.div
-              className="absolute -bottom-6 -left-6 bg-card rounded-2xl p-4 shadow-lg border border-border/50 max-w-[200px]"
+              className="absolute -bottom-6 -left-6 bg-card rounded-2xl p-4 shadow-lg border border-border/50 max-w-[200px] dark:bg-card/80 dark:border-border/30 dark:backdrop-blur-sm"
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}

@@ -120,7 +120,7 @@ const Dashboard = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+                <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 dark:bg-card/50 dark:border dark:border-border/30 dark:hover:border-primary/20">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div>
@@ -133,7 +133,7 @@ const Dashboard = () => {
                           {stat.suffix}
                         </p>
                       </div>
-                      <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", stat.bg)}>
+                      <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", stat.bg, "dark:bg-opacity-20")}>
                         <stat.icon className={cn("w-6 h-6", stat.color)} />
                       </div>
                     </div>
@@ -150,7 +150,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Card className="h-full border-0 shadow-lg overflow-hidden">
+              <Card className="h-full border-0 shadow-lg overflow-hidden dark:border dark:border-border/30">
                 <CardHeader className="gradient-primary text-primary-foreground">
                   <CardTitle className="flex items-center gap-2">
                     <Heart className="w-5 h-5" />
@@ -180,7 +180,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <Card className="h-full border-0 shadow-lg">
+              <Card className="h-full border-0 shadow-lg dark:border dark:border-border/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-primary" />
@@ -192,7 +192,7 @@ const Dashboard = () => {
                     {recentActivity.map((activity, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-4 bg-muted/50 rounded-xl"
+                        className="flex items-center justify-between p-4 bg-muted/50 rounded-xl dark:bg-muted/30"
                       >
                         <div>
                           <p className="font-medium text-sm">{activity.action}</p>
@@ -223,7 +223,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <Card className="h-full border-0 shadow-lg">
+              <Card className="h-full border-0 shadow-lg dark:border dark:border-border/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-secondary" />
@@ -235,7 +235,7 @@ const Dashboard = () => {
                     {healthTips.map((tip, index) => (
                       <div
                         key={index}
-                        className="flex gap-3 p-4 bg-secondary/5 rounded-xl border border-secondary/20"
+                        className="flex gap-3 p-4 bg-secondary/5 rounded-xl border border-secondary/20 dark:bg-secondary/10 dark:border-secondary/30"
                       >
                         <div className="w-6 h-6 rounded-full gradient-health flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-bold text-white">

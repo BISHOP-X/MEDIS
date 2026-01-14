@@ -1,0 +1,147 @@
+{
+  "Logistic Regression": {
+    "accuracy": 0.6470588235294118,
+    "precision": 0.6,
+    "recall": 0.23076923076923078,
+    "f1_score": 0.3333333333333333,
+    "roc_auc": 0.8131868131868133,
+    "confusion_matrix": [
+      [
+        19,
+        2
+      ],
+      [
+        10,
+        3
+      ]
+    ],
+    "true_negatives": 19,
+    "false_positives": 2,
+    "false_negatives": 10,
+    "true_positives": 3,
+    "best_params": {
+      "C": 0.01,
+      "max_iter": 1000,
+      "penalty": "l2",
+      "solver": "lbfgs"
+    },
+    "feature_importance": {}
+  },
+  "Random Forest": {
+    "accuracy": 0.7941176470588235,
+    "precision": 0.7142857142857143,
+    "recall": 0.7692307692307693,
+    "f1_score": 0.7407407407407407,
+    "roc_auc": 0.8534798534798536,
+    "confusion_matrix": [
+      [
+        17,
+        4
+      ],
+      [
+        3,
+        10
+      ]
+    ],
+    "true_negatives": 17,
+    "false_positives": 4,
+    "false_negatives": 3,
+    "true_positives": 10,
+    "best_params": {
+      "max_depth": 5,
+      "min_samples_leaf": 2,
+      "min_samples_split": 5,
+      "n_estimators": 100
+    },
+    "feature_importance": {
+      "Pregnancies": 0.0660833893506708,
+      "Glucose": 0.2686928847547449,
+      "BloodPressure": 0.09452585069347724,
+      "SkinThickness": 0.08992845785619838,
+      "Insulin": 0.05578250022780803,
+      "BMI": 0.16018823612733332,
+      "DiabetesPedigreeFunction": 0.07440855834357474,
+      "Age": 0.1903901226461925
+    }
+  },
+  "Support Vector Machine": {
+    "accuracy": 0.7941176470588235,
+    "precision": 0.7142857142857143,
+    "recall": 0.7692307692307693,
+    "f1_score": 0.7407407407407407,
+    "roc_auc": 0.8241758241758241,
+    "confusion_matrix": [
+      [
+        17,
+        4
+      ],
+      [
+        3,
+        10
+      ]
+    ],
+    "true_negatives": 17,
+    "false_positives": 4,
+    "false_negatives": 3,
+    "true_positives": 10,
+    "best_params": {
+      "C": 0.1,
+      "gamma": "scale",
+      "kernel": "linear"
+    },
+    "feature_importance": {}
+  },
+  "XGBoost": {
+    "accuracy": 0.7941176470588235,
+    "precision": 0.7142857142857143,
+    "recall": 0.7692307692307693,
+    "f1_score": 0.7407407407407407,
+    "roc_auc": 0.8461538461538461,
+    "confusion_matrix": [
+      [
+        17,
+        4
+      ],
+      [
+        3,
+        10
+      ]
+    ],
+    "true_negatives": 17,
+    "false_positives": 4,
+    "false_negatives": 3,
+    "true_positives": 10,
+    "best_params": {
+      "learning_rate": 0.1,
+      "max_depth": 3,
+      "n_estimators": 100,
+      "subsample": 0.8
+    },
+    "feature_importance": {
+      "Pregnancies": 0.0879296362400055,
+      "Glucose": 0.2150830626487732,
+      "BloodPressure": 0.11284661293029785,
+      "SkinThickness": 0.13747480511665344,
+      "Insulin": 0.09453170001506805,
+      "BMI": 0.1252458393573761,
+      "DiabetesPedigreeFunction": 0.08448357880115509,
+      "Age": 0.14240476489067078
+    }
+  },
+  "training_info": {
+    "date": "2026-01-14T19:28:40.704361",
+    "test_size": 0.2,
+    "cv_folds": 5,
+    "random_state": 42,
+    "feature_columns": [
+      "Pregnancies",
+      "Glucose",
+      "BloodPressure",
+      "SkinThickness",
+      "Insulin",
+      "BMI",
+      "DiabetesPedigreeFunction",
+      "Age"
+    ]
+  }
+}

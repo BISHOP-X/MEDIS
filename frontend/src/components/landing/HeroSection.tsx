@@ -14,8 +14,8 @@ const HeroSection = () => {
           alt="Medical AI Technology"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
       </div>
 
       {/* Animated Decorations */}
@@ -45,10 +45,10 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm text-primary-foreground/90 mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm mb-6 backdrop-blur-md"
           >
             <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-            <span className="text-background/90">AI-Powered Early Detection</span>
+            <span className="text-white">AI-Powered Early Detection</span>
           </motion.div>
 
           {/* Headline */}
@@ -56,10 +56,10 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-5xl md:text-6xl lg:text-7xl font-bold font-display text-background leading-tight mb-6"
+            className="text-5xl md:text-6xl lg:text-7xl font-bold font-display text-white leading-tight mb-6 text-shadow-lg"
           >
             Predict.{" "}
-            <span className="text-gradient-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
               Prevent.
             </span>{" "}
             Protect.
@@ -70,7 +70,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-lg md:text-xl text-background/70 leading-relaxed mb-8 max-w-2xl"
+            className="text-lg md:text-xl text-white/90 leading-relaxed mb-8 max-w-2xl text-shadow-md"
           >
             MEDIS uses advanced Machine Learning to predict your risk of Type 2 
             Diabetes before symptoms appear. Take control of your health with 
@@ -110,11 +110,11 @@ const HeroSection = () => {
               { icon: Heart, label: "Personalized", sublabel: "AI insights" },
             ].map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="w-12 h-12 mx-auto mb-2 rounded-xl bg-background/10 backdrop-blur-sm flex items-center justify-center">
-                  <stat.icon className="w-5 h-5 text-secondary" />
+                <div className="w-12 h-12 mx-auto mb-2 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                  <stat.icon className="w-5 h-5 text-cyan-400" />
                 </div>
-                <p className="text-sm font-semibold text-background">{stat.label}</p>
-                <p className="text-xs text-background/50">{stat.sublabel}</p>
+                <p className="text-sm font-semibold text-white">{stat.label}</p>
+                <p className="text-xs text-white/70">{stat.sublabel}</p>
               </div>
             ))}
           </motion.div>
@@ -127,8 +127,8 @@ const HeroSection = () => {
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 2, repeat: Infinity }}
       >
-        <div className="w-6 h-10 rounded-full border-2 border-background/30 flex items-start justify-center p-1">
-          <div className="w-1.5 h-3 rounded-full bg-background/50" />
+        <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-1">
+          <div className="w-1.5 h-3 rounded-full bg-white/50" />
         </div>
       </motion.div>
     </section>
