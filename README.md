@@ -2,7 +2,7 @@
 
 > **A Machine Learning-Powered Diabetes Risk Assessment Platform**
 > 
-> Final Year Project - Computer Science
+> Final Year Project - Software Engineering
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## 🎯 What is MEDIS?
 
-MEDIS is a **web-based diabetes risk assessment tool** that uses **Machine Learning** to predict a person's likelihood of developing diabetes based on their health metrics.
+MEDIS is a **web-based diabetes risk assessment tool** that uses **Machine Learning** to predict a person's likelihood of developing **type 2 diabetes** based on their health metrics.
 
 ### Key Features:
 - ✅ **4 ML Models**: Logistic Regression, Random Forest, SVM, and XGBoost
@@ -699,6 +699,53 @@ For this **educational/demonstration project**, our smart mapping approach:
 - ✅ Demonstrates SHAP explainability
 - ✅ Provides a realistic user experience
 - ✅ Is medically defensible (based on correlations)
+
+---
+
+## ⚠️ Known Limitations & Future Work
+
+### Current Limitations
+
+| Limitation | Explanation | Mitigation |
+|------------|-------------|------------|
+| **Single Dataset** | Model trained on Pima Indians Diabetes Dataset only | This is the industry-standard benchmark dataset used in academic research worldwide (UCI ML Repository). The clinical measurements (glucose, BMI, blood pressure) represent universal human biology. |
+| **Demographic Scope** | Original dataset from specific population | Clinical biomarkers like glucose and BMI are validated across all demographics. The model predicts based on physiological factors, not demographic characteristics. |
+| **Estimated Clinical Values** | Frontend estimates glucose/insulin from lifestyle inputs | Clearly disclosed as a screening tool; users are advised to confirm with actual blood tests. |
+
+### Why Pima Indians Dataset?
+
+The **Pima Indians Diabetes Dataset** is the gold standard for diabetes prediction research:
+- 📚 Used in **thousands of academic papers** including from Stanford, MIT, and Johns Hopkins
+- ✅ **Clean, well-documented** data with no missing value ambiguity
+- 🔬 **Clinically validated** features (glucose, BMI, blood pressure, age)
+- 📊 **Balanced for ML** - suitable class distribution for training
+- 🏆 **Benchmark comparability** - allows comparison with other research
+
+### Future Enhancements
+
+For production deployment, the following improvements are recommended:
+
+1. **Multi-Dataset Training**
+   - Integrate CDC Diabetes Health Indicators Dataset (250,000+ samples)
+   - Include NHANES (National Health and Nutrition Examination Survey) data
+   - Requires feature harmonization pipeline and extensive validation
+
+2. **Enhanced Generalizability**
+   - Collect diverse demographic data
+   - Implement fairness-aware ML techniques
+   - Validate across different population groups
+
+3. **Clinical Integration**
+   - Direct integration with lab results APIs (HL7 FHIR)
+   - Real glucose/HbA1c measurements instead of estimates
+   - Physician review workflow
+
+4. **Model Improvements**
+   - Ensemble methods combining multiple datasets
+   - Deep learning approaches for feature extraction
+   - Continuous learning from new validated data
+
+> **Note:** These enhancements require significant development time, clinical validation, and regulatory considerations. The current implementation demonstrates a complete, working ML pipeline suitable for academic demonstration purposes.
 
 ---
 
