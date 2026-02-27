@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { 
   Activity, TrendingUp, Heart, Calendar, 
   ArrowRight, BarChart3, Settings, Bell, FileText
@@ -10,25 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import RiskMeter from "@/components/dashboard/RiskMeter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
-const recentActivity = [
-  { date: "Jan 5, 2024", action: "Completed Risk Assessment", score: 42 },
-  { date: "Dec 20, 2023", action: "Updated Health Metrics", score: 45 },
-  { date: "Dec 1, 2023", action: "Initial Assessment", score: 52 },
-];
-
-const healthHistory = [
-  { date: "Jan 5, 2024", riskScore: 42, bmi: 26.5, bloodPressure: "Normal", status: "Moderate" },
-  { date: "Dec 20, 2023", riskScore: 45, bmi: 27.1, bloodPressure: "Normal", status: "Moderate" },
-  { date: "Dec 1, 2023", riskScore: 52, bmi: 28.2, bloodPressure: "Elevated", status: "Moderate" },
-  { date: "Sep 15, 2023", riskScore: 48, bmi: 27.8, bloodPressure: "Elevated", status: "Moderate" },
-  { date: "Jun 10, 2023", riskScore: 55, bmi: 29.0, bloodPressure: "High", status: "Moderate" },
-  { date: "Mar 5, 2023", riskScore: 58, bmi: 29.5, bloodPressure: "High", status: "Moderate" },
-  { date: "Dec 12, 2022", riskScore: 62, bmi: 30.1, bloodPressure: "High", status: "High" },
-  { date: "Sep 8, 2022", riskScore: 65, bmi: 30.8, bloodPressure: "High", status: "High" },
-  { date: "Jun 3, 2022", riskScore: 68, bmi: 31.2, bloodPressure: "High", status: "High" },
-  { date: "Mar 1, 2022", riskScore: 70, bmi: 31.5, bloodPressure: "High", status: "High" },
-];
+interface Assessment {
+  id: string;
+  created_at: string;
+  risk_score: number;
+  risk_level: string;
+  bmi: number;
+  blood_pressure: string;
+  model_used: string;
+  age: number;
+  gender: string;
+}
 
 const healthTips = [
   "Try to walk for at least 30 minutes today",
@@ -37,9 +34,44 @@ const healthTips = [
 ];
 
 const Dashboard = () => {
-  const currentScore = 42;
-  const previousScore = 52;
-  const improvement = previousScore - currentScore;
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) { setLoading(false); return; }
+    const load = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("assessments")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      setAssessments(data || []);
+      setLoading(false);
+    };
+    load();
+  }, [user?.id]);
+
+  const latest = assessments[0];
+  const previous = assessments[1];
+  const currentScore = latest ? Math.round(latest.risk_score) : 0;
+  const improvement = previous ? Math.round(previous.risk_score) - currentScore : 0;
+  const assessmentCount = assessments.length;
+
+  // Days active = days since first assessment (or 0)
+  const daysActive = assessments.length > 0
+    ? Math.max(1, Math.round((Date.now() - new Date(assessments[assessments.length - 1].created_at).getTime()) / 86400000))
+    : 0;
+
+  const getRiskLabel = (score: number) => {
+    if (score < 30) return "Low";
+    if (score < 60) return "Moderate";
+    return "High";
+  };
+
+  const userName = user?.name || "User";
 
   return (
     <div className="min-h-screen bg-background">
@@ -55,17 +87,19 @@ const Dashboard = () => {
           >
             <div>
               <h1 className="text-3xl md:text-4xl font-bold font-display mb-2">
-                Welcome back, <span className="text-gradient-primary">User</span>
+                Welcome back, <span className="text-gradient-primary">{userName}</span>
               </h1>
               <p className="text-muted-foreground">
-                Here's an overview of your health insights and progress.
+                {assessmentCount > 0
+                  ? "Here's an overview of your health insights and progress."
+                  : "Take your first assessment to see personalized insights."}
               </p>
             </div>
             <div className="flex gap-3 mt-4 md:mt-0">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={() => toast({ title: "No new notifications", description: "You're all caught up!" })}>
                 <Bell className="w-5 h-5" />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={() => toast({ title: "Settings", description: "Profile settings coming soon." })}>
                 <Settings className="w-5 h-5" />
               </Button>
               <Button variant="hero" asChild>
@@ -99,7 +133,7 @@ const Dashboard = () => {
               },
               {
                 title: "Assessments",
-                value: 3,
+                value: assessmentCount,
                 icon: BarChart3,
                 color: "text-accent",
                 bg: "bg-accent/10",
@@ -107,7 +141,7 @@ const Dashboard = () => {
               },
               {
                 title: "Days Active",
-                value: 45,
+                value: daysActive,
                 icon: Calendar,
                 color: "text-primary",
                 bg: "bg-primary/10",
@@ -128,7 +162,7 @@ const Dashboard = () => {
                           {stat.title}
                         </p>
                         <p className={cn("text-3xl font-bold", stat.color)}>
-                          {stat.positive && "+"}
+                          {stat.positive && stat.value > 0 && "+"}
                           {stat.value}
                           {stat.suffix}
                         </p>
@@ -160,15 +194,22 @@ const Dashboard = () => {
                 <CardContent className="py-8 flex flex-col items-center">
                   <RiskMeter score={currentScore} />
                   <div className="mt-6 text-center">
-                    <span className="text-xl font-bold text-risk-moderate">
-                      Moderate Risk
+                    <span className={cn(
+                      "text-xl font-bold",
+                      currentScore < 30 ? "text-risk-low" : currentScore < 60 ? "text-risk-moderate" : "text-risk-high"
+                    )}>
+                      {currentScore === 0 ? "No Data" : `${getRiskLabel(currentScore)} Risk`}
                     </span>
                     <p className="text-sm text-muted-foreground mt-2">
-                      You've improved by {improvement} points since your first assessment!
+                      {improvement > 0
+                        ? `You've improved by ${improvement} points since your previous assessment!`
+                        : assessmentCount > 0
+                          ? "Complete more assessments to track progress."
+                          : "Take your first assessment to get started."}
                     </p>
                   </div>
                   <Button variant="outline" className="mt-6" asChild>
-                    <Link to="/results">View Full Report</Link>
+                    <Link to="/assessment">New Assessment</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -189,26 +230,28 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
+                    {assessments.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">No assessments yet. Take your first one!</p>
+                    ) : assessments.slice(0, 3).map((a, index) => (
                       <div
-                        key={index}
+                        key={a.id}
                         className="flex items-center justify-between p-4 bg-muted/50 rounded-xl dark:bg-muted/30"
                       >
                         <div>
-                          <p className="font-medium text-sm">{activity.action}</p>
+                          <p className="font-medium text-sm">Completed Risk Assessment</p>
                           <p className="text-xs text-muted-foreground">
-                            {activity.date}
+                            {new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                           </p>
                         </div>
                         <div className={cn(
                           "text-sm font-bold px-3 py-1 rounded-full",
-                          activity.score < 40 
+                          Math.round(a.risk_score) < 30
                             ? "bg-risk-low/10 text-risk-low" 
-                            : activity.score < 60 
+                            : Math.round(a.risk_score) < 60
                               ? "bg-risk-moderate/10 text-risk-moderate" 
                               : "bg-risk-high/10 text-risk-high"
                         )}>
-                          {activity.score}%
+                          {Math.round(a.risk_score)}%
                         </div>
                       </div>
                     ))}
@@ -266,10 +309,18 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-primary" />
-                  Health Records (10 Year History)
+                  Health Records
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {assessments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">No assessment history yet.</p>
+                    <Button variant="hero" className="mt-4" asChild>
+                      <Link to="/assessment">Take Your First Assessment <ArrowRight className="w-4 h-4" /></Link>
+                    </Button>
+                  </div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -282,59 +333,66 @@ const Dashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {healthHistory.map((record, index) => (
-                        <tr key={index} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
-                          <td className="py-4 px-4 text-sm font-medium">{record.date}</td>
+                      {assessments.map((record) => {
+                        const score = Math.round(record.risk_score);
+                        const status = getRiskLabel(score);
+                        return (
+                        <tr key={record.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
+                          <td className="py-4 px-4 text-sm font-medium">{new Date(record.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
                           <td className="py-4 px-4">
                             <span className={cn(
                               "text-sm font-bold px-3 py-1 rounded-full",
-                              record.riskScore < 40 
+                              score < 30
                                 ? "bg-risk-low/10 text-risk-low" 
-                                : record.riskScore < 60 
+                                : score < 60
                                   ? "bg-risk-moderate/10 text-risk-moderate" 
                                   : "bg-risk-high/10 text-risk-high"
                             )}>
-                              {record.riskScore}%
+                              {score}%
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm">{record.bmi}</td>
+                          <td className="py-4 px-4 text-sm">{record.bmi?.toFixed(1) || "—"}</td>
                           <td className="py-4 px-4">
                             <span className={cn(
                               "text-xs px-2 py-1 rounded-full font-medium",
-                              record.bloodPressure === "Normal" 
+                              record.blood_pressure === "Normal" 
                                 ? "bg-green-100 text-green-700" 
-                                : record.bloodPressure === "Elevated"
+                                : record.blood_pressure === "Elevated"
                                   ? "bg-yellow-100 text-yellow-700"
                                   : "bg-red-100 text-red-700"
                             )}>
-                              {record.bloodPressure}
+                              {record.blood_pressure || "—"}
                             </span>
                           </td>
                           <td className="py-4 px-4">
                             <span className={cn(
                               "text-xs px-2 py-1 rounded-full font-medium",
-                              record.status === "Low" 
+                              status === "Low" 
                                 ? "bg-risk-low/10 text-risk-low" 
-                                : record.status === "Moderate"
+                                : status === "Moderate"
                                   ? "bg-risk-moderate/10 text-risk-moderate"
                                   : "bg-risk-high/10 text-risk-high"
                             )}>
-                              {record.status} Risk
+                              {status} Risk
                             </span>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
+                )}
+                {assessments.length > 0 && (
                 <div className="mt-4 pt-4 border-t flex justify-between items-center">
                   <p className="text-sm text-muted-foreground">
-                    Showing {healthHistory.length} records from the past 10 years
+                    Showing {assessments.length} record{assessments.length !== 1 ? "s" : ""}
                   </p>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming soon", description: "Full report download will be available soon." })}>
                     Download Full Report
                   </Button>
                 </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>

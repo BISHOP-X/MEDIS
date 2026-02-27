@@ -175,50 +175,75 @@ export function mapFamilyHistoryToPedigree(familyHistory: string): number {
  * - Diet quality (poor diet → higher glucose)
  * - Physical activity (low activity → higher glucose)
  * - BMI (higher BMI → typically higher glucose)
+ * - Age (older → higher risk)
  * 
  * Normal fasting glucose: 70-100 mg/dL
  * Pre-diabetic: 100-125 mg/dL
  * Diabetic: > 126 mg/dL
+ * 
+ * We produce a WIDE range (75-180) so the model can meaningfully differentiate.
  */
 export function estimateGlucose(
   dietQuality: number, 
   physicalActivity: number, 
-  bmi: number
+  bmi: number,
+  age?: number
 ): number {
-  // Base glucose (normal)
-  let glucose = 95;
+  // Start at a normal healthy baseline
+  let glucose = 85;
   
-  // Poor diet increases glucose (diet 1-10, lower = worse)
-  glucose += (10 - dietQuality) * 3;
+  // Poor diet is the biggest glucose driver (diet 1-10, lower = worse)
+  // A terrible diet (1) adds 45, great diet (10) adds 0
+  glucose += (10 - dietQuality) * 5;
   
-  // Low activity increases glucose
-  glucose += (10 - physicalActivity) * 2;
+  // Low activity raises glucose meaningfully
+  // No exercise (1) adds 36, very active (10) adds 0
+  glucose += (10 - physicalActivity) * 4;
   
-  // High BMI tends to correlate with higher glucose
-  if (bmi >= 30) glucose += 15;
-  else if (bmi >= 25) glucose += 8;
+  // BMI is strongly correlated with glucose
+  if (bmi >= 35) glucose += 30;
+  else if (bmi >= 30) glucose += 20;
+  else if (bmi >= 27) glucose += 12;
+  else if (bmi >= 25) glucose += 6;
   
-  // Keep within realistic bounds
-  return Math.min(200, Math.max(70, Math.round(glucose)));
+  // Age factor
+  const ageVal = age || 30;
+  if (ageVal >= 55) glucose += 15;
+  else if (ageVal >= 45) glucose += 10;
+  else if (ageVal >= 35) glucose += 5;
+  
+  // Keep within realistic bounds (75-200)
+  return Math.min(200, Math.max(75, Math.round(glucose)));
 }
 
 /**
- * Estimate insulin based on BMI and lifestyle
+ * Estimate insulin based on BMI, activity, and diet
  * 
  * Normal fasting insulin: 25-100 μU/mL
  * Higher BMI often correlates with insulin resistance (higher values)
+ * Poor lifestyle → body produces more insulin to compensate
  */
-export function estimateInsulin(bmi: number, physicalActivity: number): number {
-  let insulin = 80;  // Base value
+export function estimateInsulin(
+  bmi: number, 
+  physicalActivity: number,
+  dietQuality?: number
+): number {
+  let insulin = 60;  // Healthy baseline
   
   // Higher BMI → higher insulin (insulin resistance)
-  if (bmi >= 30) insulin += 60;
-  else if (bmi >= 25) insulin += 30;
+  if (bmi >= 35) insulin += 100;
+  else if (bmi >= 30) insulin += 70;
+  else if (bmi >= 27) insulin += 40;
+  else if (bmi >= 25) insulin += 20;
   
-  // Low activity → higher insulin
-  insulin += (10 - physicalActivity) * 5;
+  // Low activity → higher insulin resistance
+  insulin += (10 - physicalActivity) * 8;
   
-  return Math.min(400, Math.max(20, Math.round(insulin)));
+  // Poor diet raises insulin
+  const diet = dietQuality ?? 5;
+  insulin += (10 - diet) * 5;
+  
+  return Math.min(500, Math.max(15, Math.round(insulin)));
 }
 
 // ============================================================================
@@ -233,7 +258,7 @@ export function estimateInsulin(bmi: number, physicalActivity: number): number {
  */
 export function transformFormDataToMLInput(
   formData: UserFormData,
-  modelName: string = 'random_forest'
+  modelName: string = 'xgboost'
 ): MLPredictionRequest {
   // Calculate BMI from height/weight
   const bmi = calculateBMI(formData.height, formData.weight);
@@ -243,8 +268,8 @@ export function transformFormDataToMLInput(
   const diabetesPedigree = mapFamilyHistoryToPedigree(formData.familyHistory);
   
   // Estimate clinical values from lifestyle factors
-  const glucose = estimateGlucose(formData.dietQuality, formData.physicalActivity, bmi);
-  const insulin = estimateInsulin(bmi, formData.physicalActivity);
+  const glucose = estimateGlucose(formData.dietQuality, formData.physicalActivity, bmi, formData.age);
+  const insulin = estimateInsulin(bmi, formData.physicalActivity, formData.dietQuality);
   
   // For non-pregnant individuals or males, pregnancies = 0
   // This is a limitation of using the Pima dataset (female-only)
@@ -275,59 +300,37 @@ export function transformFormDataToMLInput(
  */
 export async function getPrediction(
   formData: UserFormData,
-  modelName: string = 'random_forest'
+  modelName: string = 'xgboost'
 ): Promise<PredictionResponse> {
   // Transform user input to ML format
   const mlInput = transformFormDataToMLInput(formData, modelName);
   
-  console.log('📊 Sending to ML API:', mlInput);
-  
-  const response = await fetch(`${API_BASE_URL}/predict`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(mlInput),
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `API Error: ${response.status}`);
-  }
-  
-  const result = await response.json();
-  console.log('✅ ML API Response:', result);
-  
-  return result;
-}
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-/**
- * Check if the API is healthy
- */
-export async function checkAPIHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/`);
-    return response.ok;
-  } catch {
-    return false;
+    const response = await fetch(`${API_BASE_URL}/predict`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mlInput),
+      signal: controller.signal,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `API Error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
-/**
- * Get available ML models
- */
-export async function getAvailableModels(): Promise<string[]> {
-  const response = await fetch(`${API_BASE_URL}/models`);
-  if (!response.ok) throw new Error('Failed to fetch models');
-  const data = await response.json();
-  return data.models || [];
-}
-
-/**
- * Get model performance metrics
- */
-export async function getModelMetrics(): Promise<Record<string, unknown>> {
-  const response = await fetch(`${API_BASE_URL}/metrics`);
-  if (!response.ok) throw new Error('Failed to fetch metrics');
-  return response.json();
-}

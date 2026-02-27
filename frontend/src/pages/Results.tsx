@@ -1,5 +1,5 @@
 import { useLocation, Link, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle, 
@@ -19,6 +19,8 @@ import {
   type UserFormData, 
   type PredictionResponse 
 } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 interface FormData {
   age: number;
@@ -61,6 +63,7 @@ const defaultRecommendations = [
 
 const Results = () => {
   const location = useLocation();
+  const { user } = useAuth();
   const { formData, bmi: passedBmi } = (location.state as { formData: FormData; bmi: string }) || {};
 
   // State for API response
@@ -68,6 +71,7 @@ const Results = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
   const [usingFallback, setUsingFallback] = useState(false);
+  const savedRef = useRef(false);
 
   // Calculate BMI
   const bmi = passedBmi || (formData ? calculateBMI(formData.height, formData.weight).toString() : "0");
@@ -85,9 +89,39 @@ const Results = () => {
         setApiError(null);
         
         // Call the real ML API
-        const result = await getPrediction(formData as UserFormData, 'random_forest');
+        const result = await getPrediction(formData as UserFormData, 'xgboost');
         setPrediction(result);
         setUsingFallback(false);
+
+        // Save to Supabase (only once — prevent duplicates on back/forward)
+        if (user?.id && !savedRef.current) {
+          savedRef.current = true;
+          const riskPct = result.prediction?.probability_percentage ?? result.risk_percentage ?? 0;
+          const riskLvl = result.risk?.label ?? result.risk_level ?? "Unknown";
+          const modelUsed = result.input_summary?.model_used ?? result.model_used ?? "xgboost";
+          const contributions = result.explainability?.shap ?? result.feature_contributions ?? {};
+          const recs = result.recommendations ?? [];
+          const { error: insertError } = await supabase.from("assessments").insert({
+            user_id: user.id,
+            age: formData.age,
+            gender: formData.gender,
+            height: formData.height,
+            weight: formData.weight,
+            bmi: parseFloat(bmi),
+            blood_pressure: formData.bloodPressure,
+            family_history: formData.familyHistory,
+            diet_quality: formData.dietQuality,
+            physical_activity: formData.physicalActivity,
+            risk_score: riskPct,
+            risk_level: riskLvl,
+            model_used: modelUsed,
+            feature_contributions: contributions,
+            recommendations: recs,
+          });
+          if (insertError) {
+            console.error('Failed to save assessment:', insertError.message);
+          }
+        }
         
       } catch (error) {
         console.error('API Error:', error);
@@ -466,7 +500,39 @@ const Results = () => {
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </Button>
-            <Button variant="outline" size="lg">
+            <Button variant="outline" size="lg" onClick={() => {
+              const text = [
+                "MEDIS — Diabetes Risk Assessment Report",
+                "========================================",
+                `Date: ${new Date().toLocaleDateString()}`,
+                `Risk Score: ${riskScore}%`,
+                `Risk Level: ${riskLevel.label}`,
+                "",
+                "Assessment Inputs:",
+                `  Age: ${formData.age}`,
+                `  Gender: ${formData.gender}`,
+                `  BMI: ${bmi}`,
+                `  Blood Pressure: ${formData.bloodPressure}`,
+                `  Family History: ${formData.familyHistory}`,
+                `  Diet Quality: ${formData.dietQuality}/10`,
+                `  Physical Activity: ${formData.physicalActivity}/10`,
+                "",
+                "Contributing Factors:",
+                ...factors.map(f => `  ${f.name}: ${f.value}%`),
+                "",
+                "Recommendations:",
+                ...recommendations.map((r, i) => `  ${i + 1}. ${r.title} — ${r.description}`),
+                "",
+                "Disclaimer: This is a screening tool, not a medical diagnosis.",
+              ].join("\n");
+              const blob = new Blob([text], { type: "text/plain" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `MEDIS_Report_${new Date().toISOString().slice(0, 10)}.txt`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}>
               <Download className="w-5 h-5" />
               Download Report
             </Button>

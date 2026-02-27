@@ -7,27 +7,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import heroImage from "@/assets/hero-medical-ai.jpg";
-
-// Demo credentials for easy testing - any credentials work with mock auth
-const DEMO_CREDENTIALS = {
-  email: "patient@gmail.com",
-  password: "demo123",
-};
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [nameError, setNameError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
-    email: DEMO_CREDENTIALS.email,
-    password: DEMO_CREDENTIALS.password,
+    email: "",
+    password: "",
   });
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuth();
+  const { login, signup, isAuthenticated } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -37,13 +33,31 @@ const Auth = () => {
     }
   }, [isAuthenticated, navigate, location]);
 
+  const handleNameChange = (value: string) => {
+    // Strip digits — only allow letters, spaces, hyphens, apostrophes
+    const cleaned = value.replace(/[^a-zA-Z\s\-']/g, "");
+    setFormData({ ...formData, name: cleaned });
+    if (value !== cleaned) {
+      setNameError("Name can only contain letters");
+    } else {
+      setNameError("");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLogin && formData.name.trim().length < 2) {
+      setNameError("Please enter your full name (letters only)");
+      return;
+    }
     setIsLoading(true);
 
     try {
-      // Mock authentication - accepts any credentials
-      await login(formData.email, formData.password, formData.name);
+      if (isLogin) {
+        await login(formData.email, formData.password);
+      } else {
+        await signup(formData.email, formData.password, formData.name.trim());
+      }
 
       toast({
         title: isLogin ? "Welcome back!" : "Account created!",
@@ -52,13 +66,12 @@ const Auth = () => {
           : "Your account has been created. Welcome to MEDIS!",
       });
 
-      // Redirect to intended page or dashboard
       const from = (location.state as any)?.from?.pathname || "/dashboard";
       navigate(from, { replace: true });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error?.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -109,12 +122,13 @@ const Auth = () => {
                     type="text"
                     placeholder="John Doe"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => handleNameChange(e.target.value)}
                     className="pl-10 h-12"
                     required
                   />
+                  {nameError && (
+                    <p className="text-xs text-red-500 mt-1">{nameError}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -164,9 +178,24 @@ const Auth = () => {
 
             {isLogin && (
               <div className="flex justify-end">
-                <a href="#" className="text-sm text-primary hover:underline">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!formData.email) {
+                      toast({ title: "Enter your email first", description: "We'll send a password reset link to that address.", variant: "destructive" });
+                      return;
+                    }
+                    const { error } = await supabase.auth.resetPasswordForEmail(formData.email);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ title: "Check your email", description: "A password reset link has been sent." });
+                    }
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
             )}
 
