@@ -17,8 +17,10 @@
  * See README.md for full explanation of this design choice.
  */
 
-// API Base URL - Change this if backend runs on different port
-const API_BASE_URL = 'http://localhost:8000';
+// API Base URL
+// In production (Docker/nginx), nginx proxies /api/ → backend:8000
+// In local dev, Vite proxies /api/ → localhost:8000 (see vite.config.ts)
+const API_BASE_URL = '/api';
 
 // ============================================================================
 // TYPE DEFINITIONS
