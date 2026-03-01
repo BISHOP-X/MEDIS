@@ -362,7 +362,7 @@ class DiabetesPredictor:
         
         # Make prediction
         prediction = self.model.predict(features_scaled)[0]
-        probability = self.model.predict_proba(features_scaled)[0][1]
+        probability = float(self.model.predict_proba(features_scaled)[0][1])
         
         # Calculate risk category
         risk = self._calculate_risk_category(probability)
@@ -370,12 +370,16 @@ class DiabetesPredictor:
         # Calculate SHAP values
         shap_data = self._calculate_shap_values(features_scaled)
         
+        # Sanitize input_summary features (convert numpy types to native Python)
+        raw_features = features_df.iloc[0].to_dict()
+        safe_features = {k: float(v) for k, v in raw_features.items()}
+        
         # Build response
         result = {
             'prediction': {
                 'class': int(prediction),
                 'label': 'Diabetic' if prediction == 1 else 'Not Diabetic',
-                'probability': float(probability),
+                'probability': probability,
                 'probability_percentage': round(probability * 100, 1)
             },
             'risk': risk,
@@ -384,7 +388,7 @@ class DiabetesPredictor:
                 'top_factors': shap_data['contributions'][:5] if shap_data['contributions'] else []
             },
             'input_summary': {
-                'features': features_df.iloc[0].to_dict(),
+                'features': safe_features,
                 'model_used': self.model_name
             },
             'recommendations': self._generate_recommendations(
