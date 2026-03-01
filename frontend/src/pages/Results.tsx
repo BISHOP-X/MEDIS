@@ -227,7 +227,6 @@ const Results = () => {
         positive: (factor.impact ?? factor.direction ?? '') === 'increases' || (factor.direction ?? '') === 'increases_risk',
       }));
     }
-    }
     
     // Check legacy flat structure
     if (prediction?.feature_contributions) {
