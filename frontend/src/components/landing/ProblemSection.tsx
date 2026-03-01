@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { AlertTriangle, Users, Clock, TrendingUp } from "lucide-react";
-import healthyLifestyleImage from "@/assets/healthy-lifestyle.jpg";
+const healthyLifestyleImage = "/image.png";
 
 const stats = [
   {
@@ -101,7 +101,7 @@ const ProblemSection = () => {
             <div className="relative rounded-3xl overflow-hidden shadow-2xl">
               <img
                 src={healthyLifestyleImage}
-                alt="Healthy people representing proactive healthcare"
+                alt="Black healthcare professionals representing proactive healthcare"
                 className="w-full h-auto"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 to-transparent" />
