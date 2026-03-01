@@ -56,8 +56,9 @@ const Dashboard = () => {
 
   const latest = assessments[0];
   const previous = assessments[1];
-  const currentScore = latest ? Math.round(latest.risk_score) : 0;
-  const improvement = previous ? Math.round(previous.risk_score) - currentScore : 0;
+  // Keep one decimal so values like 0.4% don't round to 0
+  const currentScore = latest ? parseFloat(latest.risk_score.toFixed(1)) : 0;
+  const improvement = previous ? parseFloat((previous.risk_score - currentScore).toFixed(1)) : 0;
   const assessmentCount = assessments.length;
 
   // Days active = days since first assessment (or 0)
@@ -163,7 +164,7 @@ const Dashboard = () => {
                         </p>
                         <p className={cn("text-3xl font-bold", stat.color)}>
                           {stat.positive && stat.value > 0 && "+"}
-                          {stat.value}
+                          {typeof stat.value === 'number' && !Number.isInteger(stat.value) ? stat.value.toFixed(1) : stat.value}
                           {stat.suffix}
                         </p>
                       </div>
@@ -245,13 +246,13 @@ const Dashboard = () => {
                         </div>
                         <div className={cn(
                           "text-sm font-bold px-3 py-1 rounded-full",
-                          Math.round(a.risk_score) < 30
+                          a.risk_score < 30
                             ? "bg-risk-low/10 text-risk-low" 
-                            : Math.round(a.risk_score) < 60
+                            : a.risk_score < 60
                               ? "bg-risk-moderate/10 text-risk-moderate" 
                               : "bg-risk-high/10 text-risk-high"
                         )}>
-                          {Math.round(a.risk_score)}%
+                          {a.risk_score.toFixed(1)}%
                         </div>
                       </div>
                     ))}
@@ -334,7 +335,7 @@ const Dashboard = () => {
                     </thead>
                     <tbody>
                       {assessments.map((record) => {
-                        const score = Math.round(record.risk_score);
+                        const score = parseFloat(record.risk_score.toFixed(1));
                         const status = getRiskLabel(score);
                         return (
                         <tr key={record.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">

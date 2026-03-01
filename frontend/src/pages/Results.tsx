@@ -217,12 +217,16 @@ const Results = () => {
   const getFactors = () => {
     // Check new nested structure first
     if (prediction?.explainability?.top_factors && prediction.explainability.top_factors.length > 0) {
-      return prediction.explainability.top_factors.slice(0, 6).map((factor) => ({
-        name: factor.feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        value: Math.round(Math.abs(factor.contribution) * 100),
+      // Normalise SHAP magnitudes to 0-100 bar width
+      const topFactors = prediction.explainability.top_factors.slice(0, 6);
+      const maxMag = Math.max(...topFactors.map((f: any) => Math.abs(f.shap_value ?? f.contribution ?? 0)), 0.0001);
+      return topFactors.map((factor: any) => ({
+        name: (factor.feature ?? '').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+        value: Math.round((Math.abs(factor.shap_value ?? factor.contribution ?? 0) / maxMag) * 100),
         max: 100,
-        positive: factor.direction === 'increases_risk',
+        positive: (factor.impact ?? factor.direction ?? '') === 'increases' || (factor.direction ?? '') === 'increases_risk',
       }));
+    }
     }
     
     // Check legacy flat structure
