@@ -174,14 +174,8 @@ app = FastAPI(
 # CORS middleware for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8080",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -269,16 +263,11 @@ async def get_metrics():
 async def predict(assessment: AssessmentInput):
     """
     Make a diabetes risk prediction with SHAP explainability.
-    
-    Takes patient assessment data and returns:
-    - Risk probability and category
-    - SHAP values for each feature
-    - Top contributing factors
-    - Personalized recommendations
-    
-    This is the main endpoint used by the MEDIS frontend.
     """
     try:
+        # Log exactly what was received (helps debug 422 issues)
+        print(f"[PREDICT] Received: {assessment.model_dump()}")
+        
         # Get predictor (loads model if not cached)
         predictor = get_predictor(assessment.model_name)
         

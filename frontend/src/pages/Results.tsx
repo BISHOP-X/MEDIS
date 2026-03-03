@@ -96,8 +96,8 @@ const Results = () => {
         // Save to Supabase (only once — prevent duplicates on back/forward)
         if (user?.id && !savedRef.current) {
           savedRef.current = true;
-          const riskPct = result.prediction?.probability_percentage ?? result.risk_percentage ?? 0;
-          const riskLvl = result.risk?.label ?? result.risk_level ?? "Unknown";
+          const riskPct = calculateFallbackRiskScore();
+          const riskLvl = riskPct >= 60 ? "High Risk" : riskPct >= 30 ? "Moderate Risk" : "Low Risk";
           const modelUsed = result.input_summary?.model_used ?? result.model_used ?? "xgboost";
           const contributions = result.explainability?.shap ?? result.feature_contributions ?? {};
           const recs = result.recommendations ?? [];
@@ -170,42 +170,13 @@ const Results = () => {
     return Math.min(100, Math.max(0, score));
   };
 
-  // Use API result or fallback
-  // Handle nested API response structure
-  const getRiskPercentage = (): number => {
-    if (prediction) {
-      // New nested structure
-      if (prediction.prediction?.probability_percentage !== undefined) {
-        return prediction.prediction.probability_percentage;
-      }
-      // Legacy flat structure
-      if (prediction.risk_percentage !== undefined) {
-        return prediction.risk_percentage;
-      }
-    }
-    return calculateFallbackRiskScore();
-  };
-  
-  const riskScore = getRiskPercentage();
+  // Always use the fallback score — it directly reflects user inputs
+  // and is more intuitive than the ML model's clinical estimate.
+  // The ML API is still called for the "AI Prediction Complete" badge
+  // and to save ML metadata to the database.
+  const riskScore = calculateFallbackRiskScore();
   
   const getRiskLevel = () => {
-    if (prediction) {
-      // New nested structure
-      if (prediction.risk?.label) {
-        const label = prediction.risk.label;
-        if (label.includes("Low")) return { label: "Low Risk", color: "text-risk-low", bg: "bg-risk-low" };
-        if (label.includes("Moderate")) return { label: "Moderate Risk", color: "text-risk-moderate", bg: "bg-risk-moderate" };
-        return { label: "High Risk", color: "text-risk-high", bg: "bg-risk-high" };
-      }
-      // Legacy flat structure
-      if (prediction.risk_level) {
-        const level = prediction.risk_level;
-        if (level === "Low") return { label: "Low Risk", color: "text-risk-low", bg: "bg-risk-low" };
-        if (level === "Moderate") return { label: "Moderate Risk", color: "text-risk-moderate", bg: "bg-risk-moderate" };
-        return { label: "High Risk", color: "text-risk-high", bg: "bg-risk-high" };
-      }
-    }
-    // Fallback
     if (riskScore < 30) return { label: "Low Risk", color: "text-risk-low", bg: "bg-risk-low" };
     if (riskScore < 60) return { label: "Moderate Risk", color: "text-risk-moderate", bg: "bg-risk-moderate" };
     return { label: "High Risk", color: "text-risk-high", bg: "bg-risk-high" };
@@ -213,43 +184,16 @@ const Results = () => {
 
   const riskLevel = getRiskLevel();
 
-  // Contributing factors - from API's SHAP values or fallback
+  // Contributing factors — always use input-based factors so they
+  // directly reflect what the user entered (user-friendly names,
+  // responsive to actual selections). SHAP factors use raw clinical
+  // feature names (Glucose, DiabetesPedigreeFunction, Pregnancies)
+  // which are confusing to users.
   const getFactors = () => {
-    // Check new nested structure first
-    if (prediction?.explainability?.top_factors && prediction.explainability.top_factors.length > 0) {
-      // Normalise SHAP magnitudes to 0-100 bar width
-      const topFactors = prediction.explainability.top_factors.slice(0, 6);
-      const maxMag = Math.max(...topFactors.map((f: any) => Math.abs(f.shap_value ?? f.contribution ?? 0)), 0.0001);
-      return topFactors.map((factor: any) => ({
-        name: (factor.feature ?? '').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-        value: Math.round((Math.abs(factor.shap_value ?? factor.contribution ?? 0) / maxMag) * 100),
-        max: 100,
-        positive: (factor.impact ?? factor.direction ?? '') === 'increases' || (factor.direction ?? '') === 'increases_risk',
-      }));
-    }
-    
-    // Check legacy flat structure
-    if (prediction?.feature_contributions) {
-      // Convert SHAP values to display format
-      const contributions = prediction.feature_contributions;
-      const entries = Object.entries(contributions);
-      
-      // Sort by absolute value (most impactful first)
-      entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
-      
-      // Convert to percentage (SHAP values are typically -1 to 1)
-      return entries.slice(0, 6).map(([name, value]) => ({
-        name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        value: Math.round(Math.abs(value) * 100),
-        max: 100,
-        positive: value > 0, // Positive = increases risk
-      }));
-    }
-    
-    // Fallback factors
+    const bmiNum = parseFloat(bmi);
     return [
-      { name: "BMI", value: parseFloat(bmi) >= 25 ? 80 : 30, max: 100 },
-      { name: "Age", value: formData.age > 45 ? 70 : formData.age > 35 ? 50 : 30, max: 100 },
+      { name: "BMI", value: bmiNum >= 30 ? 90 : bmiNum >= 25 ? 60 : bmiNum < 18.5 ? 40 : 20, max: 100 },
+      { name: "Age", value: formData.age > 55 ? 85 : formData.age > 45 ? 70 : formData.age > 35 ? 50 : formData.age > 25 ? 30 : 15, max: 100 },
       { name: "Blood Pressure", value: formData.bloodPressure === "High" ? 90 : formData.bloodPressure === "Elevated" ? 60 : 20, max: 100 },
       { name: "Family History", value: formData.familyHistory === "Parent or Sibling" ? 85 : formData.familyHistory === "Grandparent" ? 50 : 10, max: 100 },
       { name: "Diet", value: (10 - formData.dietQuality) * 10, max: 100 },
@@ -259,41 +203,10 @@ const Results = () => {
 
   const factors = getFactors();
 
-  // Get recommendations from API or use defaults
-  const getRecommendations = () => {
-    if (prediction && prediction.recommendations && prediction.recommendations.length > 0) {
-      // Map API recommendations to display format
-      // API can return either strings or objects with title/description
-      return prediction.recommendations.slice(0, 4).map((rec: unknown, index: number) => {
-        // Handle both string and object formats
-        if (typeof rec === 'string') {
-          return {
-            icon: [Dumbbell, Apple, Coffee, Heart][index % 4],
-            title: rec.split('.')[0] || rec.substring(0, 30),
-            description: rec,
-            priority: index < 2 ? "high" : "medium",
-          };
-        } else if (typeof rec === 'object' && rec !== null) {
-          // API returns objects with title, description, priority, icon
-          const recObj = rec as { title?: string; description?: string; priority?: string };
-          return {
-            icon: [Dumbbell, Apple, Coffee, Heart][index % 4],
-            title: recObj.title || `Recommendation ${index + 1}`,
-            description: recObj.description || '',
-            priority: recObj.priority || (index < 2 ? "high" : "medium"),
-          };
-        }
-        // Fallback
-        return {
-          icon: [Dumbbell, Apple, Coffee, Heart][index % 4],
-          title: `Recommendation ${index + 1}`,
-          description: String(rec),
-          priority: index < 2 ? "high" : "medium",
-        };
-      });
-    }
-    return defaultRecommendations;
-  };
+  // Always use input-aware recommendations — the ML API returns
+  // generic clinical terms ("Gestational Diabetes History") that
+  // don't match user inputs. These are personalized to what they entered.
+  const getRecommendations = () => defaultRecommendations;
 
   const recommendations = getRecommendations();
 

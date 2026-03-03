@@ -262,8 +262,8 @@ export function transformFormDataToMLInput(
   formData: UserFormData,
   modelName: string = 'xgboost'
 ): MLPredictionRequest {
-  // Calculate BMI from height/weight
-  const bmi = calculateBMI(formData.height, formData.weight);
+  // Calculate BMI from height/weight, cap at 60 to stay within model range
+  const bmi = Math.min(calculateBMI(formData.height, formData.weight), 60);
   
   // Map categorical inputs to numerical values
   const bloodPressure = mapBloodPressureToValue(formData.bloodPressure);
@@ -322,7 +322,12 @@ export async function getPrediction(
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `API Error: ${response.status}`);
+      // Log detail for debugging 422s
+      const detail = typeof errorData.detail === 'string'
+        ? errorData.detail
+        : JSON.stringify(errorData.detail ?? errorData);
+      console.error(`[API] ${response.status} from /predict:`, detail, errorData);
+      throw new Error(detail || `API Error: ${response.status}`);
     }
     
     return await response.json();
