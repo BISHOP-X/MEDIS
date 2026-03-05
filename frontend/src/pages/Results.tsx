@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { 
   getPrediction, 
   calculateBMI, 
+  estimateGlucose,
+  estimateInsulin,
   type UserFormData, 
   type PredictionResponse 
 } from "@/services/api";
@@ -31,35 +33,14 @@ interface FormData {
   familyHistory: string;
   dietQuality: number;
   physicalActivity: number;
+  smokingStatus: string;
+  alcoholConsumption: string;
+  sleepDuration: number;
+  checkupFrequency: string;
+  pregnancies: number;
 }
 
-// Default recommendations (used as fallback)
-const defaultRecommendations = [
-  {
-    icon: Dumbbell,
-    title: "Increase Physical Activity",
-    description: "Aim for at least 150 minutes of moderate exercise per week.",
-    priority: "high",
-  },
-  {
-    icon: Apple,
-    title: "Improve Diet Quality",
-    description: "Focus on whole grains, lean proteins, and more vegetables.",
-    priority: "high",
-  },
-  {
-    icon: Coffee,
-    title: "Reduce Sugar Intake",
-    description: "Cut back on sugary drinks and processed foods.",
-    priority: "medium",
-  },
-  {
-    icon: Heart,
-    title: "Monitor Blood Pressure",
-    description: "Regular check-ups can help catch issues early.",
-    priority: "medium",
-  },
-];
+
 
 const Results = () => {
   const location = useLocation();
@@ -117,6 +98,11 @@ const Results = () => {
             model_used: modelUsed,
             feature_contributions: contributions,
             recommendations: recs,
+            smoking_status: formData.smokingStatus,
+            alcohol_consumption: formData.alcoholConsumption,
+            sleep_duration: formData.sleepDuration,
+            checkup_frequency: formData.checkupFrequency,
+            pregnancies: formData.pregnancies,
           });
           if (insertError) {
             console.error('Failed to save assessment:', insertError.message);
@@ -141,13 +127,13 @@ const Results = () => {
   // Fallback risk calculation (used when API is unavailable)
   const calculateFallbackRiskScore = (): number => {
     let score = 0;
-    
-    // Age factor
+
+    // Age
     if (formData.age > 45) score += 15;
     else if (formData.age > 35) score += 10;
     else if (formData.age > 25) score += 5;
 
-    // BMI factor
+    // BMI
     const bmiNum = parseFloat(bmi);
     if (bmiNum >= 30) score += 25;
     else if (bmiNum >= 25) score += 15;
@@ -161,11 +147,26 @@ const Results = () => {
     if (formData.familyHistory === "Parent or Sibling") score += 20;
     else if (formData.familyHistory === "Grandparent") score += 10;
 
-    // Diet quality (inverse)
+    // Diet quality (inverse: bad diet = higher score)
     score += (10 - formData.dietQuality) * 2;
 
-    // Physical activity (inverse)
+    // Physical activity (inverse: sedentary = higher score)
     score += (10 - formData.physicalActivity) * 2;
+
+    // Smoking
+    if (formData.smokingStatus === "Current") score += 15;
+    else if (formData.smokingStatus === "Former") score += 5;
+
+    // Alcohol
+    if (formData.alcoholConsumption === "Frequent") score += 10;
+    else if (formData.alcoholConsumption === "Occasional") score += 3;
+
+    // Sleep (outside 6–9 hrs = higher risk)
+    const sleep = formData.sleepDuration ?? 7;
+    if (sleep < 6 || sleep > 9) score += 8;
+
+    // Rare check-ups = no monitoring
+    if (formData.checkupFrequency === "Rare") score += 5;
 
     return Math.min(100, Math.max(0, score));
   };
@@ -184,29 +185,90 @@ const Results = () => {
 
   const riskLevel = getRiskLevel();
 
-  // Contributing factors — always use input-based factors so they
-  // directly reflect what the user entered (user-friendly names,
-  // responsive to actual selections). SHAP factors use raw clinical
-  // feature names (Glucose, DiabetesPedigreeFunction, Pregnancies)
-  // which are confusing to users.
+  // Contributing factors — clinical-style with estimated biomarkers
+  // (the client explicitly requested Glucose, Insulin, BMI, Blood Pressure,
+  // Age, and Pregnancies to show as factors)
   const getFactors = () => {
     const bmiNum = parseFloat(bmi);
-    return [
-      { name: "BMI", value: bmiNum >= 30 ? 90 : bmiNum >= 25 ? 60 : bmiNum < 18.5 ? 40 : 20, max: 100 },
-      { name: "Age", value: formData.age > 55 ? 85 : formData.age > 45 ? 70 : formData.age > 35 ? 50 : formData.age > 25 ? 30 : 15, max: 100 },
-      { name: "Blood Pressure", value: formData.bloodPressure === "High" ? 90 : formData.bloodPressure === "Elevated" ? 60 : 20, max: 100 },
-      { name: "Family History", value: formData.familyHistory === "Parent or Sibling" ? 85 : formData.familyHistory === "Grandparent" ? 50 : 10, max: 100 },
-      { name: "Diet", value: (10 - formData.dietQuality) * 10, max: 100 },
-      { name: "Activity", value: (10 - formData.physicalActivity) * 10, max: 100 },
+    const estimatedGlucose = estimateGlucose(formData.dietQuality, formData.physicalActivity, bmiNum, formData.age);
+    const estimatedInsulin = estimateInsulin(bmiNum, formData.physicalActivity, formData.dietQuality);
+
+    // Normalise to 0–100 bars relative to clinical risk thresholds
+    const glucoseBar = Math.min(100, Math.round(((estimatedGlucose - 75) / (200 - 75)) * 100));
+    const insulinBar = Math.min(100, Math.round(((estimatedInsulin - 15) / (300 - 15)) * 100));
+    const bmiBar     = Math.min(100, Math.round((bmiNum / 45) * 100));
+    const bpBar      = formData.bloodPressure === "High" ? 85 : formData.bloodPressure === "Elevated" ? 60 : 25;
+    const ageBar     = Math.min(100, Math.round(((formData.age - 18) / 62) * 100));
+    const familyBar  = formData.familyHistory === "Parent or Sibling" ? 90 : formData.familyHistory === "Grandparent" ? 55 : 10;
+
+    const factors: Array<{ name: string; value: number; max: number }> = [
+      { name: "Glucose (est.)",   value: glucoseBar, max: 100 },
+      { name: "BMI",              value: bmiBar,     max: 100 },
+      { name: "Blood Pressure",   value: bpBar,      max: 100 },
+      { name: "Insulin (est.)",   value: insulinBar, max: 100 },
+      { name: "Age",              value: ageBar,     max: 100 },
+      { name: "Family History",   value: familyBar,  max: 100 },
     ];
+
+    // Replace Family History with Pregnancies for females who have been pregnant
+    if (formData.gender === "Female" && formData.pregnancies > 0) {
+      const pregnancyBar = Math.min(100, formData.pregnancies * 12);
+      factors.splice(5, 1, { name: "Pregnancies", value: pregnancyBar, max: 100 });
+    }
+
+    return factors;
   };
 
   const factors = getFactors();
 
-  // Always use input-aware recommendations — the ML API returns
-  // generic clinical terms ("Gestational Diabetes History") that
-  // don't match user inputs. These are personalized to what they entered.
-  const getRecommendations = () => defaultRecommendations;
+  // Conditional recommendations — only shown when the user's inputs
+  // actually warrant them. Perfect health inputs → positive reinforcement only.
+  const getRecommendations = () => {
+    const bmiNum = parseFloat(bmi);
+    const recs: Array<{ icon: any; title: string; description: string; priority: string }> = [];
+
+    if (formData.physicalActivity < 6)
+      recs.push({ icon: Dumbbell, title: "Increase Physical Activity", description: "Aim for at least 150 minutes of moderate exercise per week.", priority: "high" });
+
+    if (formData.dietQuality < 6)
+      recs.push({ icon: Apple, title: "Improve Diet Quality", description: "Focus on whole grains, lean proteins, and more vegetables.", priority: "high" });
+
+    if (formData.smokingStatus === "Current")
+      recs.push({ icon: AlertTriangle, title: "Quit Smoking", description: "Smoking significantly raises insulin resistance and doubles diabetes risk. Seek support to quit.", priority: "high" });
+
+    if (formData.alcoholConsumption === "Frequent")
+      recs.push({ icon: Coffee, title: "Reduce Alcohol Consumption", description: "Frequent alcohol disrupts blood sugar regulation and strains the liver.", priority: "high" });
+
+    if (formData.sleepDuration < 6 || formData.sleepDuration > 9)
+      recs.push({ icon: Heart, title: "Improve Sleep Habits", description: "Aim for 7–8 hours of sleep. Poor sleep raises blood sugar and insulin resistance.", priority: "medium" });
+
+    if (bmiNum >= 25)
+      recs.push({ icon: Activity, title: "Maintain Healthy Weight", description: "Even a 5–10% weight reduction significantly lowers diabetes risk.", priority: bmiNum >= 30 ? "high" : "medium" });
+
+    if (formData.bloodPressure === "High" || formData.bloodPressure === "Elevated")
+      recs.push({ icon: Heart, title: "Monitor Blood Pressure", description: "High blood pressure compounds diabetes risk. Regular monitoring is essential.", priority: formData.bloodPressure === "High" ? "high" : "medium" });
+
+    if (formData.checkupFrequency === "Rare")
+      recs.push({ icon: CheckCircle, title: "Schedule Regular Check-ups", description: "Annual blood sugar testing helps detect pre-diabetes early when it is most treatable.", priority: "medium" });
+
+    if (formData.dietQuality < 5)
+      recs.push({ icon: Coffee, title: "Reduce Sugar Intake", description: "Cut back on sugary drinks and processed foods to improve metabolic health.", priority: "medium" });
+
+    if (formData.familyHistory !== "None" && riskScore >= 40)
+      recs.push({ icon: TrendingUp, title: "Genetic Risk Monitoring", description: "With family history of diabetes, annual HbA1c testing is strongly recommended.", priority: "high" });
+
+    // Perfect health — show positive reinforcement instead
+    if (recs.length === 0) {
+      return [
+        { icon: CheckCircle, title: "Maintain Your Healthy Habits",    description: "Your lifestyle significantly reduces diabetes risk. Keep it up!",                    priority: "low" },
+        { icon: Activity,    title: "Stay Active",                      description: "Continue regular exercise to keep insulin sensitivity high long-term.",            priority: "low" },
+        { icon: Apple,       title: "Continue Balanced Diet",           description: "Your diet quality is excellent. Maintaining it is key to long-term metabolic health.", priority: "low" },
+        { icon: Heart,       title: "Annual Health Screening",          description: "Even with low risk, annual check-ups are a valuable preventive habit.",            priority: "low" },
+      ];
+    }
+
+    return recs.slice(0, 4);
+  };
 
   const recommendations = getRecommendations();
 

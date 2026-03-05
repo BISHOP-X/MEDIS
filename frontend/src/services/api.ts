@@ -32,13 +32,18 @@ const API_BASE_URL = '/api';
  */
 export interface UserFormData {
   age: number;
-  gender: string;          // "Male" | "Female"
-  height: number;          // in cm
-  weight: number;          // in kg
-  bloodPressure: string;   // "Normal" | "Elevated" | "High"
-  familyHistory: string;   // "None" | "Parent or Sibling" | "Grandparent"
-  dietQuality: number;     // 1-10 scale
+  gender: string;           // "Male" | "Female"
+  height: number;           // in cm
+  weight: number;           // in kg
+  bloodPressure: string;    // "Normal" | "Elevated" | "High"
+  familyHistory: string;    // "None" | "Parent or Sibling" | "Grandparent"
+  dietQuality: number;      // 1-10 scale
   physicalActivity: number; // 1-10 scale
+  smokingStatus?: string;      // "Never" | "Former" | "Current"
+  alcoholConsumption?: string; // "None" | "Occasional" | "Frequent"
+  sleepDuration?: number;      // hours per night
+  checkupFrequency?: string;   // "Regular" | "Occasional" | "Rare"
+  pregnancies?: number;        // actual count (females)
 }
 
 /**
@@ -273,9 +278,10 @@ export function transformFormDataToMLInput(
   const glucose = estimateGlucose(formData.dietQuality, formData.physicalActivity, bmi, formData.age);
   const insulin = estimateInsulin(bmi, formData.physicalActivity, formData.dietQuality);
   
-  // For non-pregnant individuals or males, pregnancies = 0
-  // This is a limitation of using the Pima dataset (female-only)
-  const pregnancies = formData.gender === 'Female' ? 1 : 0;
+  // Use actual pregnancy count for females if provided; default to 1 for females, 0 for males
+  const pregnancies = formData.gender === 'Female'
+    ? (formData.pregnancies ?? 1)
+    : 0;
   
   // Skin thickness - use population average (no easy way to collect this)
   const skinThickness = 25;

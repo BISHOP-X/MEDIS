@@ -23,6 +23,11 @@ interface FormData {
   familyHistory: string;
   dietQuality: number;
   physicalActivity: number;
+  smokingStatus: string;
+  alcoholConsumption: string;
+  sleepDuration: number;
+  checkupFrequency: string;
+  pregnancies: number;
 }
 
 const steps = [
@@ -43,6 +48,11 @@ const Assessment = () => {
     familyHistory: "",
     dietQuality: 5,
     physicalActivity: 5,
+    smokingStatus: "",
+    alcoholConsumption: "",
+    sleepDuration: 7,
+    checkupFrequency: "",
+    pregnancies: 0,
   });
 
   const calculateBMI = () => {
@@ -93,6 +103,18 @@ const Assessment = () => {
       case 3: // Lifestyle
         if (!formData.familyHistory) {
           setValidationError("Please select your family history");
+          return false;
+        }
+        if (!formData.smokingStatus) {
+          setValidationError("Please select your smoking status");
+          return false;
+        }
+        if (!formData.alcoholConsumption) {
+          setValidationError("Please select your alcohol consumption");
+          return false;
+        }
+        if (!formData.checkupFrequency) {
+          setValidationError("Please select your check-up frequency");
           return false;
         }
         return true;
@@ -458,6 +480,142 @@ const Assessment = () => {
                       {formData.physicalActivity}/10
                     </p>
                   </div>
+
+                  {/* Smoking Status */}
+                  <div className="space-y-3">
+                    <Label>Smoking Status</Label>
+                    <RadioGroup
+                      value={formData.smokingStatus}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, smokingStatus: value })
+                      }
+                      className="grid grid-cols-1 md:grid-cols-3 gap-3"
+                    >
+                      {["Never", "Former", "Current"].map((status) => (
+                        <Label
+                          key={status}
+                          htmlFor={`smoking-${status}`}
+                          className={cn(
+                            "flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all",
+                            formData.smokingStatus === status
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <RadioGroupItem
+                            value={status}
+                            id={`smoking-${status}`}
+                            className="sr-only"
+                          />
+                          <span className="font-medium">{status}</span>
+                        </Label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  {/* Alcohol Consumption */}
+                  <div className="space-y-3">
+                    <Label>Alcohol Consumption</Label>
+                    <RadioGroup
+                      value={formData.alcoholConsumption}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, alcoholConsumption: value })
+                      }
+                      className="grid grid-cols-1 md:grid-cols-3 gap-3"
+                    >
+                      {["None", "Occasional", "Frequent"].map((level) => (
+                        <Label
+                          key={level}
+                          htmlFor={`alcohol-${level}`}
+                          className={cn(
+                            "flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all",
+                            formData.alcoholConsumption === level
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <RadioGroupItem
+                            value={level}
+                            id={`alcohol-${level}`}
+                            className="sr-only"
+                          />
+                          <span className="font-medium">{level}</span>
+                        </Label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  {/* Sleep Duration */}
+                  <div className="space-y-3">
+                    <Label htmlFor="sleepDuration">Sleep Duration (hours per night)</Label>
+                    <p className="text-sm text-muted-foreground">
+                      How many hours do you typically sleep each night?
+                    </p>
+                    <Input
+                      id="sleepDuration"
+                      type="number"
+                      value={formData.sleepDuration}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sleepDuration: Number(e.target.value) })
+                      }
+                      min={1}
+                      max={14}
+                      className="h-12 max-w-xs"
+                    />
+                  </div>
+
+                  {/* Medical Check-up Frequency */}
+                  <div className="space-y-3">
+                    <Label>Medical Check-up Frequency</Label>
+                    <RadioGroup
+                      value={formData.checkupFrequency}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, checkupFrequency: value })
+                      }
+                      className="grid grid-cols-1 md:grid-cols-3 gap-3"
+                    >
+                      {["Regular", "Occasional", "Rare"].map((freq) => (
+                        <Label
+                          key={freq}
+                          htmlFor={`checkup-${freq}`}
+                          className={cn(
+                            "flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all",
+                            formData.checkupFrequency === freq
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <RadioGroupItem
+                            value={freq}
+                            id={`checkup-${freq}`}
+                            className="sr-only"
+                          />
+                          <span className="font-medium">{freq}</span>
+                        </Label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  {/* Pregnancies — females only */}
+                  {formData.gender === "Female" && (
+                    <div className="space-y-3">
+                      <Label htmlFor="pregnancies">Number of Pregnancies</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Total number of pregnancies (including current, if applicable)
+                      </p>
+                      <Input
+                        id="pregnancies"
+                        type="number"
+                        value={formData.pregnancies}
+                        onChange={(e) =>
+                          setFormData({ ...formData, pregnancies: Math.max(0, Number(e.target.value)) })
+                        }
+                        min={0}
+                        max={20}
+                        className="h-12 max-w-xs"
+                      />
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
