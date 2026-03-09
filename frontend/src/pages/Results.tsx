@@ -196,7 +196,14 @@ const Results = () => {
     // Normalise to 0–100 bars relative to clinical risk thresholds
     const glucoseBar = Math.min(100, Math.round(((estimatedGlucose - 75) / (200 - 75)) * 100));
     const insulinBar = Math.min(100, Math.round(((estimatedInsulin - 15) / (300 - 15)) * 100));
-    const bmiBar     = Math.min(100, Math.round((bmiNum / 45) * 100));
+    // BMI mapped to clinical risk tiers — not a linear proportion of 45
+    // so that a healthy BMI correctly shows Low Impact
+    const bmiBar =
+      bmiNum >= 35 ? 92 :
+      bmiNum >= 30 ? 75 :
+      bmiNum >= 27.5 ? 58 :
+      bmiNum >= 25 ? 42 :
+      bmiNum >= 18.5 ? 15 : 30; // underweight has some risk
     const bpBar      = formData.bloodPressure === "High" ? 85 : formData.bloodPressure === "Elevated" ? 60 : 25;
     const ageBar     = Math.min(100, Math.round(((formData.age - 18) / 62) * 100));
     const familyBar  = formData.familyHistory === "Parent or Sibling" ? 90 : formData.familyHistory === "Grandparent" ? 55 : 10;

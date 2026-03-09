@@ -38,6 +38,8 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const RECORDS_PER_PAGE = 5;
 
   useEffect(() => {
     if (!user?.id) { setLoading(false); return; }
@@ -334,7 +336,9 @@ const Dashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {assessments.map((record) => {
+                      {assessments
+                        .slice((currentPage - 1) * RECORDS_PER_PAGE, currentPage * RECORDS_PER_PAGE)
+                        .map((record) => {
                         const score = parseFloat(record.risk_score.toFixed(1));
                         const status = getRiskLabel(score);
                         return (
@@ -352,7 +356,7 @@ const Dashboard = () => {
                               {score}%
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm">{record.bmi?.toFixed(1) || "—"}</td>
+                          <td className="py-4 px-4 text-sm">{record.bmi?.toFixed(1) || "\u2014"}</td>
                           <td className="py-4 px-4">
                             <span className={cn(
                               "text-xs px-2 py-1 rounded-full font-medium",
@@ -362,7 +366,7 @@ const Dashboard = () => {
                                   ? "bg-yellow-100 text-yellow-700"
                                   : "bg-red-100 text-red-700"
                             )}>
-                              {record.blood_pressure || "—"}
+                              {record.blood_pressure || "\u2014"}
                             </span>
                           </td>
                           <td className="py-4 px-4">
@@ -384,16 +388,40 @@ const Dashboard = () => {
                   </table>
                 </div>
                 )}
-                {assessments.length > 0 && (
-                <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {assessments.length} record{assessments.length !== 1 ? "s" : ""}
-                  </p>
-                  <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming soon", description: "Full report download will be available soon." })}>
-                    Download Full Report
-                  </Button>
-                </div>
-                )}
+                {assessments.length > 0 && (() => {
+                  const totalPages = Math.ceil(assessments.length / RECORDS_PER_PAGE);
+                  return (
+                    <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3">
+                      <p className="text-sm text-muted-foreground">
+                        Showing {Math.min((currentPage - 1) * RECORDS_PER_PAGE + 1, assessments.length)}–{Math.min(currentPage * RECORDS_PER_PAGE, assessments.length)} of {assessments.length} record{assessments.length !== 1 ? "s" : ""}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-sm text-muted-foreground px-2">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming soon", description: "Full report download will be available soon." })}>
+                        Download Full Report
+                      </Button>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </motion.div>
