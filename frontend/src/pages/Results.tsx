@@ -190,8 +190,30 @@ const Results = () => {
   // Age, and Pregnancies to show as factors)
   const getFactors = () => {
     const bmiNum = parseFloat(bmi);
-    const estimatedGlucose = estimateGlucose(formData.dietQuality, formData.physicalActivity, bmiNum, formData.age);
-    const estimatedInsulin = estimateInsulin(bmiNum, formData.physicalActivity, formData.dietQuality);
+    const estimatedGlucose = estimateGlucose(
+      formData.dietQuality,
+      formData.physicalActivity,
+      bmiNum,
+      formData.age,
+      formData.smokingStatus,
+      formData.alcoholConsumption,
+      formData.sleepDuration,
+      formData.bloodPressure,
+      formData.familyHistory,
+      formData.checkupFrequency,
+    );
+    const estimatedInsulin = estimateInsulin(
+      bmiNum,
+      formData.physicalActivity,
+      formData.dietQuality,
+      formData.age,
+      formData.smokingStatus,
+      formData.alcoholConsumption,
+      formData.sleepDuration,
+      formData.bloodPressure,
+      formData.familyHistory,
+      formData.checkupFrequency,
+    );
 
     // Normalise to 0–100 bars relative to clinical risk thresholds
     const glucoseBar = Math.min(100, Math.round(((estimatedGlucose - 75) / (200 - 75)) * 100));
@@ -203,7 +225,7 @@ const Results = () => {
       bmiNum >= 30 ? 75 :
       bmiNum >= 27.5 ? 58 :
       bmiNum >= 25 ? 42 :
-      bmiNum >= 18.5 ? 15 : 30; // underweight has some risk
+      bmiNum >= 18.5 ? 15 : 20; // underweight stays Low impact
     const bpBar      = formData.bloodPressure === "High" ? 85 : formData.bloodPressure === "Elevated" ? 60 : 25;
     const ageBar     = Math.min(100, Math.round(((formData.age - 18) / 62) * 100));
     const familyBar  = formData.familyHistory === "Parent or Sibling" ? 90 : formData.familyHistory === "Grandparent" ? 55 : 10;

@@ -194,30 +194,59 @@ export function estimateGlucose(
   dietQuality: number, 
   physicalActivity: number, 
   bmi: number,
-  age?: number
+  age?: number,
+  smokingStatus?: string,
+  alcoholConsumption?: string,
+  sleepDuration?: number,
+  bloodPressure?: string,
+  familyHistory?: string,
+  checkupFrequency?: string,
 ): number {
   // Start at a normal healthy baseline
-  let glucose = 85;
+  let glucose = 82;
   
-  // Poor diet is the biggest glucose driver (diet 1-10, lower = worse)
-  // A terrible diet (1) adds 45, great diet (10) adds 0
-  glucose += (10 - dietQuality) * 5;
+  // Poor diet is a major glucose driver (diet 1-10, lower = worse)
+  glucose += (10 - dietQuality) * 4.5;
   
   // Low activity raises glucose meaningfully
-  // No exercise (1) adds 36, very active (10) adds 0
-  glucose += (10 - physicalActivity) * 4;
+  glucose += (10 - physicalActivity) * 3.5;
   
   // BMI is strongly correlated with glucose
-  if (bmi >= 35) glucose += 30;
+  if (bmi >= 35) glucose += 28;
   else if (bmi >= 30) glucose += 20;
   else if (bmi >= 27) glucose += 12;
   else if (bmi >= 25) glucose += 6;
+  else if (bmi < 18.5) glucose += 4;
   
   // Age factor
   const ageVal = age || 30;
-  if (ageVal >= 55) glucose += 15;
-  else if (ageVal >= 45) glucose += 10;
-  else if (ageVal >= 35) glucose += 5;
+  if (ageVal >= 55) glucose += 12;
+  else if (ageVal >= 45) glucose += 8;
+  else if (ageVal >= 35) glucose += 4;
+
+  // Blood pressure and family history influence glucose regulation
+  if (bloodPressure === 'High') glucose += 18;
+  else if (bloodPressure === 'Elevated') glucose += 10;
+
+  if (familyHistory === 'Parent or Sibling') glucose += 14;
+  else if (familyHistory === 'Grandparent') glucose += 8;
+
+  // Smoking and alcohol influence insulin sensitivity and fasting glucose
+  if (smokingStatus === 'Current') glucose += 14;
+  else if (smokingStatus === 'Former') glucose += 6;
+
+  if (alcoholConsumption === 'Frequent') glucose += 10;
+  else if (alcoholConsumption === 'Occasional') glucose += 4;
+
+  // Sleep dysregulation can raise glucose
+  const sleep = sleepDuration ?? 7;
+  if (sleep < 5) glucose += 12;
+  else if (sleep < 6) glucose += 8;
+  else if (sleep > 9) glucose += 6;
+
+  // Rare medical checkups correlate with delayed prevention
+  if (checkupFrequency === 'Rare') glucose += 4;
+  else if (checkupFrequency === 'Occasional') glucose += 2;
   
   // Keep within realistic bounds (75-200)
   return Math.min(200, Math.max(75, Math.round(glucose)));
@@ -233,22 +262,57 @@ export function estimateGlucose(
 export function estimateInsulin(
   bmi: number, 
   physicalActivity: number,
-  dietQuality?: number
+  dietQuality?: number,
+  age?: number,
+  smokingStatus?: string,
+  alcoholConsumption?: string,
+  sleepDuration?: number,
+  bloodPressure?: string,
+  familyHistory?: string,
+  checkupFrequency?: string,
 ): number {
-  let insulin = 60;  // Healthy baseline
+  let insulin = 55;  // Healthy baseline
   
   // Higher BMI → higher insulin (insulin resistance)
   if (bmi >= 35) insulin += 100;
   else if (bmi >= 30) insulin += 70;
   else if (bmi >= 27) insulin += 40;
   else if (bmi >= 25) insulin += 20;
+  else if (bmi < 18.5) insulin += 6;
   
   // Low activity → higher insulin resistance
-  insulin += (10 - physicalActivity) * 8;
+  insulin += (10 - physicalActivity) * 6;
   
   // Poor diet raises insulin
   const diet = dietQuality ?? 5;
-  insulin += (10 - diet) * 5;
+  insulin += (10 - diet) * 4;
+
+  // Age, blood pressure, and genetics increase resistance burden
+  const ageVal = age || 30;
+  if (ageVal >= 55) insulin += 10;
+  else if (ageVal >= 45) insulin += 6;
+  else if (ageVal >= 35) insulin += 3;
+
+  if (bloodPressure === 'High') insulin += 22;
+  else if (bloodPressure === 'Elevated') insulin += 12;
+
+  if (familyHistory === 'Parent or Sibling') insulin += 16;
+  else if (familyHistory === 'Grandparent') insulin += 8;
+
+  // Smoking/alcohol and sleep are strong insulin-resistance modifiers
+  if (smokingStatus === 'Current') insulin += 22;
+  else if (smokingStatus === 'Former') insulin += 10;
+
+  if (alcoholConsumption === 'Frequent') insulin += 14;
+  else if (alcoholConsumption === 'Occasional') insulin += 6;
+
+  const sleep = sleepDuration ?? 7;
+  if (sleep < 5) insulin += 16;
+  else if (sleep < 6) insulin += 10;
+  else if (sleep > 9) insulin += 8;
+
+  if (checkupFrequency === 'Rare') insulin += 8;
+  else if (checkupFrequency === 'Occasional') insulin += 4;
   
   return Math.min(500, Math.max(15, Math.round(insulin)));
 }
@@ -275,8 +339,30 @@ export function transformFormDataToMLInput(
   const diabetesPedigree = mapFamilyHistoryToPedigree(formData.familyHistory);
   
   // Estimate clinical values from lifestyle factors
-  const glucose = estimateGlucose(formData.dietQuality, formData.physicalActivity, bmi, formData.age);
-  const insulin = estimateInsulin(bmi, formData.physicalActivity, formData.dietQuality);
+  const glucose = estimateGlucose(
+    formData.dietQuality,
+    formData.physicalActivity,
+    bmi,
+    formData.age,
+    formData.smokingStatus,
+    formData.alcoholConsumption,
+    formData.sleepDuration,
+    formData.bloodPressure,
+    formData.familyHistory,
+    formData.checkupFrequency,
+  );
+  const insulin = estimateInsulin(
+    bmi,
+    formData.physicalActivity,
+    formData.dietQuality,
+    formData.age,
+    formData.smokingStatus,
+    formData.alcoholConsumption,
+    formData.sleepDuration,
+    formData.bloodPressure,
+    formData.familyHistory,
+    formData.checkupFrequency,
+  );
   
   // Use actual pregnancy count for females if provided; default to 1 for females, 0 for males
   const pregnancies = formData.gender === 'Female'
