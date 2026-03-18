@@ -206,17 +206,16 @@ export function estimateGlucose(
   let glucose = 82;
   
   // Poor diet is a major glucose driver (diet 1-10, lower = worse)
-  glucose += (10 - dietQuality) * 4.5;
+  glucose += (10 - dietQuality) * 4.0;
   
   // Low activity raises glucose meaningfully
-  glucose += (10 - physicalActivity) * 3.5;
+  glucose += (10 - physicalActivity) * 3.0;
   
   // BMI is strongly correlated with glucose
   if (bmi >= 35) glucose += 28;
   else if (bmi >= 30) glucose += 20;
   else if (bmi >= 27) glucose += 12;
   else if (bmi >= 25) glucose += 6;
-  else if (bmi < 18.5) glucose += 4;
   
   // Age factor
   const ageVal = age || 30;
@@ -232,11 +231,11 @@ export function estimateGlucose(
   else if (familyHistory === 'Grandparent') glucose += 8;
 
   // Smoking and alcohol influence insulin sensitivity and fasting glucose
-  if (smokingStatus === 'Current') glucose += 14;
-  else if (smokingStatus === 'Former') glucose += 6;
+  if (smokingStatus === 'Current') glucose += 25;
+  else if (smokingStatus === 'Former') glucose += 10;
 
-  if (alcoholConsumption === 'Frequent') glucose += 10;
-  else if (alcoholConsumption === 'Occasional') glucose += 4;
+  if (alcoholConsumption === 'Frequent') glucose += 18;
+  else if (alcoholConsumption === 'Occasional') glucose += 6;
 
   // Sleep dysregulation can raise glucose
   const sleep = sleepDuration ?? 7;
@@ -278,14 +277,13 @@ export function estimateInsulin(
   else if (bmi >= 30) insulin += 70;
   else if (bmi >= 27) insulin += 40;
   else if (bmi >= 25) insulin += 20;
-  else if (bmi < 18.5) insulin += 6;
   
   // Low activity → higher insulin resistance
-  insulin += (10 - physicalActivity) * 6;
+  insulin += (10 - physicalActivity) * 5.5;
   
   // Poor diet raises insulin
   const diet = dietQuality ?? 5;
-  insulin += (10 - diet) * 4;
+  insulin += (10 - diet) * 5.5;
 
   // Age, blood pressure, and genetics increase resistance burden
   const ageVal = age || 30;
@@ -300,11 +298,11 @@ export function estimateInsulin(
   else if (familyHistory === 'Grandparent') insulin += 8;
 
   // Smoking/alcohol and sleep are strong insulin-resistance modifiers
-  if (smokingStatus === 'Current') insulin += 22;
-  else if (smokingStatus === 'Former') insulin += 10;
+  if (smokingStatus === 'Current') insulin += 30;
+  else if (smokingStatus === 'Former') insulin += 14;
 
-  if (alcoholConsumption === 'Frequent') insulin += 14;
-  else if (alcoholConsumption === 'Occasional') insulin += 6;
+  if (alcoholConsumption === 'Frequent') insulin += 20;
+  else if (alcoholConsumption === 'Occasional') insulin += 8;
 
   const sleep = sleepDuration ?? 7;
   if (sleep < 5) insulin += 16;

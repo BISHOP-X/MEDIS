@@ -3,8 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   User, Heart, Activity, ChevronRight, ChevronLeft, 
-  Check, Calculator, ArrowRight, AlertCircle
+  Check, Calculator, ArrowRight, AlertCircle, Info
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -35,6 +41,21 @@ const steps = [
   { id: 2, title: "Vitals", icon: Heart, description: "Health metrics" },
   { id: 3, title: "Lifestyle", icon: Activity, description: "Daily habits" },
 ];
+
+const InfoTooltip = ({ text }: { text: string }) => (
+  <TooltipProvider delayDuration={200}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex align-middle ml-1.5 cursor-help">
+          <Info className="w-4 h-4 text-muted-foreground" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <p>{text}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 const Assessment = () => {
   const navigate = useNavigate();
@@ -347,7 +368,7 @@ const Assessment = () => {
                         <Calculator className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Calculated BMI</p>
+                        <p className="text-sm text-muted-foreground">Calculated BMI <InfoTooltip text="BMI is a key indicator of body fat and is strongly associated with diabetes risk, as higher BMI levels are linked to obesity and reduced insulin sensitivity." /></p>
                         <p className="text-2xl font-bold">{calculateBMI()}</p>
                       </div>
                     </div>
@@ -357,7 +378,7 @@ const Assessment = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <Label>Blood Pressure History</Label>
+                    <Label>Blood Pressure History <InfoTooltip text="Hypertension is commonly associated with metabolic disorders and may increase the likelihood of developing diabetes." /></Label>
                     <RadioGroup
                       value={formData.bloodPressure}
                       onValueChange={(value) =>
@@ -403,7 +424,7 @@ const Assessment = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <Label>Family History of Diabetes</Label>
+                    <Label>Family History of Diabetes <InfoTooltip text="Genetic predisposition can increase an individual's susceptibility to the disease." /></Label>
                     <RadioGroup
                       value={formData.familyHistory}
                       onValueChange={(value) =>
@@ -434,7 +455,7 @@ const Assessment = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <Label>Diet Quality</Label>
+                    <Label>Diet Quality <InfoTooltip text="Poor dietary patterns — especially diets high in sugar and processed foods — can contribute to weight gain and impaired glucose metabolism." /></Label>
                     <p className="text-sm text-muted-foreground mb-2">
                       How would you rate your overall diet? (1 = Poor, 10 = Excellent)
                     </p>
@@ -458,7 +479,7 @@ const Assessment = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <Label>Physical Activity Level</Label>
+                    <Label>Physical Activity Level <InfoTooltip text="Regular exercise improves insulin sensitivity and helps regulate blood glucose levels." /></Label>
                     <p className="text-sm text-muted-foreground mb-2">
                       How active are you weekly? (1 = Sedentary, 10 = Very Active)
                     </p>
@@ -483,7 +504,7 @@ const Assessment = () => {
 
                   {/* Smoking Status */}
                   <div className="space-y-3">
-                    <Label>Smoking Status</Label>
+                    <Label>Smoking Status <InfoTooltip text="Smoking has been linked to increased insulin resistance and chronic inflammation, both of which can contribute to the development of Type 2 diabetes." /></Label>
                     <RadioGroup
                       value={formData.smokingStatus}
                       onValueChange={(value) =>
@@ -515,7 +536,7 @@ const Assessment = () => {
 
                   {/* Alcohol Consumption */}
                   <div className="space-y-3">
-                    <Label>Alcohol Consumption</Label>
+                    <Label>Alcohol Consumption <InfoTooltip text="Excessive alcohol intake can disrupt glucose metabolism and affect the liver's ability to regulate blood sugar levels." /></Label>
                     <RadioGroup
                       value={formData.alcoholConsumption}
                       onValueChange={(value) =>
@@ -547,7 +568,7 @@ const Assessment = () => {
 
                   {/* Sleep Duration */}
                   <div className="space-y-3">
-                    <Label htmlFor="sleepDuration">Sleep Duration (hours per night)</Label>
+                    <Label htmlFor="sleepDuration">Sleep Duration (hours per night) <InfoTooltip text="Insufficient or irregular sleep patterns have been associated with hormonal imbalance and impaired insulin regulation." /></Label>
                     <p className="text-sm text-muted-foreground">
                       How many hours do you typically sleep each night?
                     </p>
@@ -566,7 +587,7 @@ const Assessment = () => {
 
                   {/* Medical Check-up Frequency */}
                   <div className="space-y-3">
-                    <Label>Medical Check-up Frequency</Label>
+                    <Label>Medical Check-up Frequency <InfoTooltip text="How often you monitor your health can influence early detection and management of potential risk factors." /></Label>
                     <RadioGroup
                       value={formData.checkupFrequency}
                       onValueChange={(value) =>

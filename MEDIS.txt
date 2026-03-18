@@ -1,0 +1,22 @@
+MEDIS
+
+Health Vitals section. 
+BMI is a key indicator of body fat and is strongly associated with diabetes risk, as higher BMI levels are linked to obesity and reduced insulin sensitivity.
+High Blood pressure: hypertension is commonly associated with metabolic disorders and may increase the likelihood of developing diabetes.
+
+
+Lifestyle Factors section. 
+Family history of diabetes is an important factor because genetic predisposition can increase an individual’s susceptibility to the disease.
+
+Diet quality input helps assess nutritional habits, as poor dietary patterns especially diets high in sugar and processed foods can contribute to weight gain and impaired glucose metabolism.
+
+Physical activity level indicates how active a user is, since regular exercise improves insulin sensitivity and helps regulate blood glucose levels.
+
+Smoking status: smoking has been linked to increased insulin resistance and chronic inflammation, both of which can contribute to the development of Type 2 diabetes.
+
+Alcohol consumption is considered because excessive alcohol intake can disrupt glucose metabolism and affect the liver’s ability to regulate blood sugar levels.
+
+Sleep duration: insufficient or irregular sleep patterns have been associated with hormonal imbalance and impaired insulin regulation.
+
+medical check-up frequency helps indicate how often a user monitors their health, which can influence early detection and management of potential risk factors.
+
