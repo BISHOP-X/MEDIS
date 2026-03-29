@@ -16,3 +16,4 @@ env/
 # ML model files (large binary files - keep locally)
 # Uncomment below if you want to exclude model files from git
 # ml/saved_models/*.joblib
+frontend/.env.production
