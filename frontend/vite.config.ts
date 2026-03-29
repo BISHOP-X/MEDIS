@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       // In local dev: /api/predict → http://localhost:8000/predict
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_URL || 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
